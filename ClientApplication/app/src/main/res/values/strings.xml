@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">YAHM</string>
+    <string name="spotHole">Buca</string>
+    <string name="spotBack">Dosso</string>
+    <string name="roadJoint">Giunto</string>
+    <string name="manHole">Tombino</string>
 </resources>

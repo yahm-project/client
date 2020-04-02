@@ -63,6 +63,7 @@ class ReactiveSensor(private val context: Context) {
             val latestLocation: PublishSubject<SensorData> = PublishSubject.create()
             val locationListener = object : LocationListener {
                 override fun onLocationChanged(location: Location?) {
+                    Log.i("YAHM_GPS", location.toString())
                     latestLocation.onNext(getSensorDataBasedOnSensorType(sensorType.toString(), arrayOf(location!!.latitude, location.longitude, location.speed)))
                 }
 
@@ -82,9 +83,10 @@ class ReactiveSensor(private val context: Context) {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 throw IllegalAccessError()
             }
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 100L, 0f, locationListener)
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000L, 100f, locationListener)
             observables[sensorType] = latestLocation
             latestLocation
+
         }
         return getObservableIfPresentOrExecuteAction(sensorType, action)
     }
