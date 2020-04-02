@@ -15,68 +15,93 @@ import android.os.Bundle
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import io.reactivex.rxjava3.subjects.PublishSubject
+import java.util.*
+import kotlin.collections.HashMap
 
 
-class ReactiveSensor(private val sensorManager: SensorManager) {
+class ReactiveSensor(private val context: Context) {
 
     private val listeners: MutableMap<Int, SensorEventListener> = HashMap()
-    private val observers: MutableMap<Int, Observable<SensorEvent>> = HashMap()
+    private val observables = EnumMap<SensorType, Observable<SensorData>>(SensorType::class.java)
+    private val sensorManager: SensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
-
-    fun observerFor(sensorType: String): Observable<SensorEvent> {
-        val sensorIntType = sensorIntType(sensorType)
-        if (observers.containsKey(sensorIntType)) {
-            return observers[sensorIntType]!!
-        }
-
-        val sensor = sensorManager.getDefaultSensor(sensorIntType)
-
-        return Observable.create<SensorEvent> {
-            val listener = object: SensorEventListener {
-                override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-                    // Nope
-                }
-
-                override fun onSensorChanged(event: SensorEvent?) {
-                    it.onNext(event)
-                }
-            }
-
-            sensorManager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
-            listeners[sensorIntType] = listener
+    private fun getObservableIfPresentOrExecuteAction(sensorType: SensorType, action: () -> Observable<SensorData>): Observable<SensorData> {
+        return if (observables.containsKey(sensorType)) {
+            observables[sensorType]!!
+        } else {
+            action()
         }
     }
-    fun observeGPS(context: Context): Observable<Location>? {
-        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val latestLocation: PublishSubject<Location> = PublishSubject.create();
-        val locationListener = object: LocationListener {
-            override fun onLocationChanged(location: Location?) {
-                Log.i("YAHM", location.toString())
-                latestLocation.onNext(location)
-            }
 
-            override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-                Log.v("YAHM_GPS", "Not yet implemented")
-            }
+    private fun observeMotionSensor(sensorType: SensorType): Observable<SensorData> {
+        val sensorIntType = sensorIntType(sensorType.toString())
+        val action: () -> Observable<SensorData> = {
+            val sensor = sensorManager.getDefaultSensor(sensorIntType)
 
-            override fun onProviderEnabled(provider: String?) {
-                Log.v("YAHM_GPS", "Not yet implemented")
-            }
+            val observableToReturn: Observable<SensorData> = Observable.create {
+                val listener = object : SensorEventListener {
+                    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+                        // Nope
+                    }
 
-            override fun onProviderDisabled(provider: String?) {
-                Log.v("YAHM_GPS", "Not yet implemented")
+                    override fun onSensorChanged(event: SensorEvent?) {
+                        it.onNext(getSensorDataBasedOnSensorType(sensorType.toString(), event!!.values.toTypedArray()))
+                    }
+                }
+                sensorManager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+                listeners[sensorIntType] = listener
             }
-
+            observables[sensorType] = observableToReturn
+            observableToReturn
         }
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return null;
+        return getObservableIfPresentOrExecuteAction(sensorType, action)
+    }
+
+    private fun observeGPS(sensorType: SensorType): Observable<SensorData> {
+        val action: () -> Observable<SensorData> = {
+            val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            val latestLocation: PublishSubject<SensorData> = PublishSubject.create()
+            val locationListener = object : LocationListener {
+                override fun onLocationChanged(location: Location?) {
+                    latestLocation.onNext(getSensorDataBasedOnSensorType(sensorType.toString(), arrayOf(location!!.latitude, location.longitude, location.speed)))
+                }
+
+                override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+                    Log.v("YAHM_GPS", "Not yet implemented")
+                }
+
+                override fun onProviderEnabled(provider: String?) {
+                    Log.v("YAHM_GPS", "Not yet implemented")
+                }
+
+                override fun onProviderDisabled(provider: String?) {
+                    Log.v("YAHM_GPS", "Not yet implemented")
+                }
+
+            }
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                throw IllegalAccessError()
+            }
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 100L, 0f, locationListener)
+            observables[sensorType] = latestLocation
+            latestLocation
         }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 100L, 0f, locationListener)
-        return latestLocation;
+        return getObservableIfPresentOrExecuteAction(sensorType, action)
+    }
+
+    fun observerFor(sensorType: SensorType): Observable<SensorData> {
+        return when (sensorType) {
+            SensorType.ACCELEROMETER, SensorType.GYROSCOPE -> {
+                observeMotionSensor(sensorType)
+            }
+            SensorType.GPS -> {
+                observeGPS(sensorType)
+            }
+        }
     }
 
     fun stopRead(sensorType: String) {
-        val sensorIntType = sensorIntType(sensorType)
+        val sensorIntType: Int = sensorIntType(sensorType)
         if (!listeners.containsKey(sensorIntType)) {
             throw IllegalStateException("No listener for type $sensorType")
         }
@@ -94,5 +119,20 @@ class ReactiveSensor(private val sensorManager: SensorManager) {
         "ROTATION_VECTOR" -> Sensor.TYPE_ROTATION_VECTOR
         "STEP_COUNTER" -> Sensor.TYPE_STEP_COUNTER
         else -> throw IllegalArgumentException("Invalid type: $sensorType")
+    }
+
+    private fun getSensorDataBasedOnSensorType(sensorType: String, values: Array<out Number>): SensorData {
+        return when (sensorType) {
+            "ACCELEROMETER" -> {
+                AccelerationData(xAcceleration = values[0].toFloat(), yAcceleration = values[1].toFloat(), zAcceleration = values[2].toFloat())
+            }
+            "GYROSCOPE" -> {
+                GyroscopeData(xAngularVelocity = values[0].toFloat(), yAngularVelocity = values[1].toFloat(), zAngularVelocity = values[2].toFloat())
+            }
+            "GPS" -> {
+                GpsData(latitude = values[0].toDouble(), longitude = values[1].toDouble(), speed = values[2].toFloat())
+            }
+            else -> throw IllegalArgumentException("Invalid type: $sensorType")
+        }
     }
 }
