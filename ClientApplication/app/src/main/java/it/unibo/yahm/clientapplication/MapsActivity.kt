@@ -1,7 +1,5 @@
 package it.unibo.yahm.clientapplication
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Point
 import android.os.Bundle
 import android.os.Handler
@@ -15,18 +13,15 @@ import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
 import it.unibo.yahm.clientapplication.Utilities.DrawableUtils
 import java.util.*
-import kotlin.math.abs
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.sin
+import kotlin.math.*
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     companion object {
-        private val DEFAULT_LOCATION = LatLng(44.22, 12.05)
+        private val DEFAULT_LOCATION = LatLng(44.133331, 12.233333)
         private const val DELTA_ROTATION: Float = 30f
-        private const val ZOOM: Float = 15f
+        private const val ZOOM: Float = 17f
         private const val TILT: Float = 45f
         private const val BEARING: Float = 0f
     }
@@ -90,14 +85,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 val lat: Double = t * newCoordinates.latitude + (1 - t) * startLatLng.latitude
                 carMarker!!.position = LatLng(lat, lng)
 
-                updateCameraLocation(carMarker!!.position)
-                fixCameraPerspective()
                 if (t < 1.0) { // Post again 16ms later.
                     handler.postDelayed(this, 16)
                 }
             }
         }
         handler.post(runnableCode)
+        updateCameraLocation(LatLng(location.first, location.second))
+        //fixCameraPerspective()
     }
 
     private fun updateCameraLocation(location: LatLng, zoom: Float = ZOOM, tilt: Float = TILT, bearing: Float = BEARING) {
@@ -175,14 +170,27 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val gyroscope = reactiveSensors!!.observerFor(SensorType.GYROSCOPE)
 
         gps.subscribe {
-            Log.d("MapActivity", "${{ (it as GpsData).latitude; it.longitude }}")
+            Log.d("MapActivity", "GPS Update: ${{(it as GpsData).latitude; it.longitude }}")
             updateCarLocation(Pair((it as GpsData).latitude, it.longitude))
         }
 
+        //TODO: remove the following, just for debug
+        val handler = Handler()
+        var testPos = Pair(carMarker!!.position.latitude, carMarker!!.position.longitude)
+        val handlerCode = object : Runnable {
+            override fun run() {
+                updateCarLocation(testPos)
+                testPos = Pair(testPos.first + 0.001, testPos.second + 0.001)
+                handler.postDelayed(this, 5000)
+            }
+        }
+        handler.post(handlerCode)
+
+        /*
         gyroscope.subscribe {
             Log.d("MapActivity", "${{ (it as GyroscopeData).xAngularVelocity; it.yAngularVelocity; it.zAngularVelocity }}")
             updateRotation(0f); //TODO change it
-        }
+        }*/
 
     }
 
