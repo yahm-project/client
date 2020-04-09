@@ -14,6 +14,7 @@ import android.location.LocationListener
 import android.os.Bundle
 import android.util.Log
 import androidx.core.app.ActivityCompat
+import com.google.android.gms.location.LocationServices
 import io.reactivex.rxjava3.subjects.PublishSubject
 import java.util.*
 import kotlin.collections.HashMap
@@ -84,9 +85,17 @@ class ReactiveSensor(private val context: Context) {
                 throw IllegalAccessError()
             }
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000L, 100f, locationListener)
+
+            // TODO: should be moved?
+            val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+            fusedLocationProviderClient.lastLocation.addOnSuccessListener { location: Location? ->
+                if (location != null) {
+                    latestLocation.onNext(getSensorDataBasedOnSensorType(sensorType.toString(), arrayOf(location.latitude, location.longitude, location.speed)))
+                }
+            }
+
             observables[sensorType] = latestLocation
             latestLocation
-
         }
         return getObservableIfPresentOrExecuteAction(sensorType, action)
     }
