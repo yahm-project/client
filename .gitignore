@@ -1,2 +1,5 @@
 *.class
 *.log
+
+ClientApplication/app/.idea/libraries/
+ClientApplication/app/captures/
