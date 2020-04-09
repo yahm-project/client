@@ -1,9 +1,8 @@
 package it.unibo.yahm.clientapplication
 
 import android.graphics.Bitmap
-import android.graphics.Canvas
+import android.graphics.BitmapFactory
 import android.graphics.Point
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.SystemClock
@@ -61,6 +60,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         carMarker = addCarMarker(DEFAULT_LOCATION!!, BEARING)
+        updateCameraLocation(carMarker!!.position)
         observeCarSensors()
     }
 
