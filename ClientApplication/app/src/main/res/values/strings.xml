@@ -4,4 +4,6 @@
     <string name="spotBack">Dosso</string>
     <string name="roadJoint">Giunto</string>
     <string name="manHole">Tombino</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
 </resources>
