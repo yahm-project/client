@@ -1,20 +1,19 @@
 package it.unibo.yahm.clientapplication
+
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import android.content.Context
-import android.hardware.SensorEvent
-import android.hardware.SensorManager
+import android.Manifest
+import android.content.pm.PackageManager
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.kotlin.Observables
-import io.reactivex.rxjava3.subjects.PublishSubject
+import kotlin.system.exitProcess
 
 class MainActivity : AppCompatActivity() {
-
-    private var reactiveSensors: ReactiveSensors? = null
+    var reactiveSensor: ReactiveSensor? = null
+    var gpsData: Observable<SensorData>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,21 +25,30 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, MapsActivity::class.java)
             startActivity(intent)
         }
-        val sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        reactiveSensors = ReactiveSensors(sensorManager)
 
-        readFromSensor()
+        reactiveSensor = ReactiveSensor(applicationContext)
+        val accelerometerData = reactiveSensor!!.observerFor(SensorType.ACCELEROMETER)
+        val gyroscopeData = reactiveSensor!!.observerFor(SensorType.GYROSCOPE)
+        try {
+            gpsData = reactiveSensor!!.observerFor(SensorType.GPS)
+        } catch (illegalAccess: IllegalAccessError) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                1
+            )
+        }
+        Combiner.create().combine(accelerometerData, gyroscopeData, gpsData!!).subscribe {
+            Log.i("YAHM", it.toString())
+        }
     }
 
-    private fun readFromSensor() {
-        val accelerometer = reactiveSensors!!.observerFor("ACCELEROMETER")
-        val gyroscope = reactiveSensors!!.observerFor("GYROSCOPE")
-
-        val combined = Observables.combineLatest(accelerometer, gyroscope) { a, b ->
-            "${a.sensor.stringType} ${a.values.toList()} -- ${b.sensor.stringType} ${b.values.toList()}"
-
-        }.subscribe {
-            Log.i("YAHM", it)
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        if(requestCode == 1 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            gpsData = reactiveSensor!!.observerFor(SensorType.GPS)
+        } else {
+            this.finish()
+            exitProcess(1)
         }
     }
 }

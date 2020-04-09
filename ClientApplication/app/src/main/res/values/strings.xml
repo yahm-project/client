@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">YAHM</string>
     <string name="title_activity_maps">Map</string>
+    <string name="show_map">Show Map</string>
 </resources>

@@ -1,33 +1,41 @@
 package it.unibo.yahm.clientapplication
 
-import android.content.Context
-import android.graphics.Color
-import android.graphics.Interpolator
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Point
-import android.hardware.SensorManager
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.SystemClock
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.animation.LinearInterpolator
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
-import io.reactivex.rxjava3.kotlin.Observables
-import java.util.Collections
-import kotlin.concurrent.thread
-import kotlin.random.Random
+import it.unibo.yahm.clientapplication.Utilities.DrawableUtils
+import java.util.*
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
-    private val DELTA_ROTATION: Float = 30f
+    companion object {
+        private val DEFAULT_LOCATION = LatLng(44.22, 12.05)
+        private const val DELTA_ROTATION: Float = 30f
+        private const val ZOOM: Float = 15f
+        private const val TILT: Float = 45f
+        private const val BEARING: Float = 0f
+    }
+
     private lateinit var mMap: GoogleMap
-    private var carLocation: LatLng? = null
-    private var carRotation: Float = 0f
     private var carMarker: Marker? = null
     private var drawedPolylines: List<Polyline> = Collections.emptyList()
-    private  var reactiveSensors: ReactiveSensors? = null
+    private var reactiveSensors: ReactiveSensor? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,8 +46,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        val sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        reactiveSensors = ReactiveSensors(sensorManager)
+        reactiveSensors = ReactiveSensor(applicationContext)
     }
 
     /**
@@ -53,47 +60,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
      */
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-
-        carLocation = LatLng(44.22, 12.05)
-        carMarker = mMap.addMarker(
-            MarkerOptions()
-                .position(carLocation!!)
-                .rotation(carRotation)
-        )
-
-
-        /*
-        var testPos = Pair(44.22, 12.06)
-        var testRotation = 90f
-        val handler = Handler()
-        val handlerCode = object : Runnable {
-            override fun run() {
-                updateCarLocation(testPos)
-                updateCarRotation(testRotation)
-                mMap.animateCamera(
-                    CameraUpdateFactory.newLatLng(
-                        LatLng(
-                            testPos.first,
-                            testPos.second
-                        )
-                    )
-                )
-                testPos = Pair(testPos.first, testPos.second + 0.01)
-                handler.postDelayed(this, 5000)
-            }
-        }
-        mMap.animateCamera(
-            CameraUpdateFactory.newCameraPosition(cameraUpdate),
-            object : GoogleMap.CancelableCallback {
-                override fun onFinish() {
-                    handler.post(handlerCode)
-                }
-
-                override fun onCancel() {
-
-                }
-            })
-         */
+        carMarker = addCarMarker(DEFAULT_LOCATION!!, BEARING)
         observeCarSensors()
     }
 
@@ -105,15 +72,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         drawedPolylines += polyline
     }
 
-    fun updateCarLocation(location: Pair<Double, Double>) {
-        val newCoordinates = LatLng(location.first, location.second)
+    private fun updateCarLocation(location: Pair<Double, Double>) {
         val handler = Handler()
+        val newCoordinates = LatLng(location.first, location.second)
         val start = SystemClock.uptimeMillis()
         val proj: Projection = mMap.projection
         val startPoint: Point = proj.toScreenLocation(carMarker!!.position)
         val startLatLng = proj.fromScreenLocation(startPoint)
         val duration: Long = 500
-
         val interpolator = LinearInterpolator()
 
         val runnableCode = object : Runnable {
@@ -122,7 +88,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 val t: Float = interpolator.getInterpolation(elapsed.toFloat() / duration)
                 val lng: Double = t * newCoordinates.longitude + (1 - t) * startLatLng.longitude
                 val lat: Double = t * newCoordinates.latitude + (1 - t) * startLatLng.latitude
-                carMarker!!.setPosition(LatLng(lat, lng))
+                carMarker!!.position = LatLng(lat, lng)
+
+                updateCameraLocation(carMarker!!.position)
+                fixCameraPerspective()
                 if (t < 1.0) { // Post again 16ms later.
                     handler.postDelayed(this, 16)
                 }
@@ -131,11 +100,33 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         handler.post(runnableCode)
     }
 
+    private fun updateCameraLocation(location: LatLng, zoom: Float = ZOOM, tilt: Float = TILT, bearing: Float = BEARING) {
+        val cameraUpdate = CameraPosition.Builder()
+            .target(location)
+            .zoom(zoom)
+            .tilt(tilt)
+            .bearing(bearing)
+            .build();
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraUpdate))
+    }
+
+    private fun fixCameraPerspective() {
+        val mapCenter: LatLng = mMap.cameraPosition.target
+        val projection: Projection = mMap.projection
+        val centerPoint = projection.toScreenLocation(mapCenter)
+        val displayMetrics = DisplayMetrics()
+        windowManager.defaultDisplay.getMetrics(displayMetrics) //not needed?
+        val displayHeight = displayMetrics.heightPixels
+        centerPoint.y = centerPoint.y - (displayHeight / 4.5).toInt() // move center down for approx 22%
+        val newCenterPoint = projection.fromScreenLocation(centerPoint)
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newCenterPoint, ZOOM))
+    }
+
     /*
         La mappa deve adattare il proprio orientamento facendo in modo che il marker sia sempre rivolto verso l'alto,
         questo richiede che la mappa e la camera ruotino in sincronia non appena la rotazione dell'auto superi un certo delta rispetto ad essi.
     */
-    fun updatePerspective(targetRotation: Float) {
+    private fun updateRotation(targetRotation: Float) {
         val handler = Handler()
         val start = SystemClock.uptimeMillis()
         val currentRotation = carMarker!!.rotation
@@ -160,10 +151,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 val newRotation: Float = t * targetRotation + (1 - t) * currentRotation
 
                 val cameraUpdate = CameraPosition.Builder()
-                    .target(carLocation)
-                    .zoom(15f)
+                    .target(carMarker!!.position)
+                    .zoom(ZOOM)
                     .bearing(newRotation)
-                    .tilt(45f)
+                    .tilt(TILT)
                     .build();
                 mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraUpdate))
                 if (t < 1.0) { // Post again 16ms later.
@@ -171,7 +162,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
             }
         }
-        if(Math.abs(mMap.cameraPosition.bearing - carMarker!!.rotation) < DELTA_ROTATION ) {
+        if (abs(mMap.cameraPosition.bearing - carMarker!!.rotation) < DELTA_ROTATION) {
             handler.post(rotateCar)
         } else {
             handler.post(rotateCamera)
@@ -180,15 +171,46 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun observeCarSensors() {
-        val gps = reactiveSensors!!.observerFor("FINE_LOCATION")
-        val gyroscope = reactiveSensors!!.observerFor("GYROSCOPE")
+        val gps = reactiveSensors!!.observerFor(SensorType.GPS)
+        val gyroscope = reactiveSensors!!.observerFor(SensorType.GYROSCOPE)
 
         gps.subscribe {
-            updateCarLocation(Pair(it.values[0].toDouble(), it.values[1].toDouble()))
+            Log.d("MapActivity", "${{ (it as GpsData).latitude; it.longitude }}")
+            updateCarLocation(Pair((it as GpsData).latitude, it.longitude))
         }
 
         gyroscope.subscribe {
-            updatePerspective(it.values[0])
+            Log.d("MapActivity", "${{ (it as GyroscopeData).xAngularVelocity; it.yAngularVelocity; it.zAngularVelocity }}")
+            updateRotation(0f); //TODO change it
         }
+
+    }
+
+    private fun addCarMarker(latLng: LatLng, rotation: Float): Marker {
+        val circleDrawable =
+            ContextCompat.getDrawable(applicationContext, R.drawable.ic_up_arrow_circle)
+        val markerIcon = DrawableUtils.getMarkerIconFromDrawable(circleDrawable!!)
+
+        return mMap.addMarker(
+            MarkerOptions()
+                .position(latLng)
+                .anchor(0.5f, 0.5f)
+                .rotation(rotation)
+                .flat(true)
+                .icon(markerIcon)
+        )
+    }
+
+
+
+    /* Get segment's bearing the user is navigating */
+    private fun getBearingForSegment(begin: LatLng, end: LatLng): Float {
+        val dLon = end.longitude - begin.longitude
+        val x = sin(Math.toRadians(dLon)) * cos(Math.toRadians(end.latitude))
+        val y = (cos(Math.toRadians(begin.latitude)) * sin(Math.toRadians(end.latitude))
+                - sin(Math.toRadians(begin.latitude)) * cos(Math.toRadians(end.latitude))
+                * cos(Math.toRadians(dLon)))
+        val bearing = Math.toDegrees(atan2(x, y))
+        return bearing.toFloat()
     }
 }

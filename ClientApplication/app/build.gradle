@@ -8,7 +8,8 @@ android {
 
     defaultConfig {
         applicationId "it.unibo.yahm.clientapplication"
-        minSdkVersion 23
+        minSdkVersion 26
+        //reactive-test
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
