@@ -1,4 +1,4 @@
-package it.unibo.yahm.clientapplication
+package it.unibo.yahm.rxsensor
 
 data class CombinedSensorsData(val xAcceleration: Float,
                                val yAcceleration: Float,

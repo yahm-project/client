@@ -1,4 +1,4 @@
-package it.unibo.yahm.clientapplication
+package it.unibo.yahm.rxsensor
 
 interface SensorData
 data class AccelerationData(val xAcceleration: Float,
