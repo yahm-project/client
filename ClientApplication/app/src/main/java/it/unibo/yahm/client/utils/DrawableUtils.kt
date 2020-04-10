@@ -1,4 +1,4 @@
-package it.unibo.yahm.clientapplication.Utilities
+package it.unibo.yahm.client.utils
 
 import android.graphics.Bitmap
 import android.graphics.Canvas

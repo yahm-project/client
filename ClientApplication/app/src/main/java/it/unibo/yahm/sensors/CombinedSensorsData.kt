@@ -1,14 +1,16 @@
-package it.unibo.yahm.rxsensor
+package it.unibo.yahm.sensors
 
-data class CombinedSensorsData(val xAcceleration: Float,
-                               val yAcceleration: Float,
-                               val zAcceleration: Float,
-                               val xAngularVelocity: Float,
-                               val yAngularVelocity: Float,
-                               val zAngularVelocity: Float,
-                               val latitude: Double,
-                               val longitude: Double,
-                               val speed: Float)
+data class CombinedSensorsData(
+    val xAcceleration: Float,
+    val yAcceleration: Float,
+    val zAcceleration: Float,
+    val xAngularVelocity: Float,
+    val yAngularVelocity: Float,
+    val zAngularVelocity: Float,
+    val latitude: Double,
+    val longitude: Double,
+    val speed: Float
+)
 
 class CombinedSensorsDataBuilder {
     private var xAcceleration: Float? = null
@@ -31,6 +33,17 @@ class CombinedSensorsDataBuilder {
     fun latitude(latitude: Double) = apply { this.latitude = latitude }
     fun longitude(longitude: Double) = apply { this.longitude = longitude }
     fun speed(speed: Float) = apply { this.speed = speed }
+
     //if some of params value are null the Builder throws an Exception
-    fun build() = CombinedSensorsData(xAcceleration!!, yAcceleration!!, zAcceleration!!, xAngularVelocity!!, yAngularVelocity!!, zAngularVelocity!!, latitude!!, longitude!!, speed!!)
+    fun build() = CombinedSensorsData(
+        xAcceleration!!,
+        yAcceleration!!,
+        zAcceleration!!,
+        xAngularVelocity!!,
+        yAngularVelocity!!,
+        zAngularVelocity!!,
+        latitude!!,
+        longitude!!,
+        speed!!
+    )
 }

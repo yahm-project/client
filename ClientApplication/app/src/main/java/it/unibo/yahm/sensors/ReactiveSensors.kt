@@ -1,4 +1,4 @@
-package it.unibo.yahm.rxsensor
+package it.unibo.yahm.sensors
 
 import android.Manifest
 import android.content.Context
@@ -24,9 +24,13 @@ class ReactiveSensor(private val context: Context) {
 
     private val listeners: MutableMap<Int, SensorEventListener> = HashMap()
     private val observables = EnumMap<SensorType, Observable<SensorData>>(SensorType::class.java)
-    private val sensorManager: SensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    private val sensorManager: SensorManager =
+        context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
-    private fun getObservableIfPresentOrExecuteAction(sensorType: SensorType, action: () -> Observable<SensorData>): Observable<SensorData> {
+    private fun getObservableIfPresentOrExecuteAction(
+        sensorType: SensorType,
+        action: () -> Observable<SensorData>
+    ): Observable<SensorData> {
         return if (observables.containsKey(sensorType)) {
             observables[sensorType]!!
         } else {
@@ -46,7 +50,12 @@ class ReactiveSensor(private val context: Context) {
                     }
 
                     override fun onSensorChanged(event: SensorEvent?) {
-                        it.onNext(getSensorDataBasedOnSensorType(sensorType.toString(), event!!.values.toTypedArray()))
+                        it.onNext(
+                            getSensorDataBasedOnSensorType(
+                                sensorType.toString(),
+                                event!!.values.toTypedArray()
+                            )
+                        )
                     }
                 }
                 sensorManager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
@@ -60,12 +69,18 @@ class ReactiveSensor(private val context: Context) {
 
     private fun observeGPS(sensorType: SensorType): Observable<SensorData> {
         val action: () -> Observable<SensorData> = {
-            val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            val locationManager =
+                context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
             val latestLocation: PublishSubject<SensorData> = PublishSubject.create()
             val locationListener = object : LocationListener {
                 override fun onLocationChanged(location: Location?) {
                     Log.i("YAHM_GPS", location.toString())
-                    latestLocation.onNext(getSensorDataBasedOnSensorType(sensorType.toString(), arrayOf(location!!.latitude, location.longitude, location.speed)))
+                    latestLocation.onNext(
+                        getSensorDataBasedOnSensorType(
+                            sensorType.toString(),
+                            arrayOf(location!!.latitude, location.longitude, location.speed)
+                        )
+                    )
                 }
 
                 override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
@@ -81,16 +96,31 @@ class ReactiveSensor(private val context: Context) {
                 }
 
             }
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 throw IllegalAccessError()
             }
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000L, 100f, locationListener)
+            locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                2000L,
+                100f,
+                locationListener
+            )
 
             // TODO: should be moved?
-            val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+            val fusedLocationProviderClient =
+                LocationServices.getFusedLocationProviderClient(context)
             fusedLocationProviderClient.lastLocation.addOnSuccessListener { location: Location? ->
                 if (location != null) {
-                    latestLocation.onNext(getSensorDataBasedOnSensorType(sensorType.toString(), arrayOf(location.latitude, location.longitude, location.speed)))
+                    latestLocation.onNext(
+                        getSensorDataBasedOnSensorType(
+                            sensorType.toString(),
+                            arrayOf(location.latitude, location.longitude, location.speed)
+                        )
+                    )
                 }
             }
 
@@ -132,16 +162,31 @@ class ReactiveSensor(private val context: Context) {
         else -> throw IllegalArgumentException("Invalid type: $sensorType")
     }
 
-    private fun getSensorDataBasedOnSensorType(sensorType: String, values: Array<out Number>): SensorData {
+    private fun getSensorDataBasedOnSensorType(
+        sensorType: String,
+        values: Array<out Number>
+    ): SensorData {
         return when (sensorType) {
             "ACCELEROMETER" -> {
-                AccelerationData(xAcceleration = values[0].toFloat(), yAcceleration = values[1].toFloat(), zAcceleration = values[2].toFloat())
+                AccelerationData(
+                    xAcceleration = values[0].toFloat(),
+                    yAcceleration = values[1].toFloat(),
+                    zAcceleration = values[2].toFloat()
+                )
             }
             "GYROSCOPE" -> {
-                GyroscopeData(xAngularVelocity = values[0].toFloat(), yAngularVelocity = values[1].toFloat(), zAngularVelocity = values[2].toFloat())
+                GyroscopeData(
+                    xAngularVelocity = values[0].toFloat(),
+                    yAngularVelocity = values[1].toFloat(),
+                    zAngularVelocity = values[2].toFloat()
+                )
             }
             "GPS" -> {
-                GpsData(latitude = values[0].toDouble(), longitude = values[1].toDouble(), speed = values[2].toFloat())
+                GpsData(
+                    latitude = values[0].toDouble(),
+                    longitude = values[1].toDouble(),
+                    speed = values[2].toFloat()
+                )
             }
             else -> throw IllegalArgumentException("Invalid type: $sensorType")
         }

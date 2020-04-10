@@ -1,4 +1,4 @@
-package it.unibo.yahm.clientapplication
+package it.unibo.yahm.client
 
 import android.graphics.Point
 import android.os.Bundle
@@ -11,9 +11,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
-import it.unibo.yahm.clientapplication.Utilities.DrawableUtils
+import it.unibo.yahm.client.utils.DrawableUtils
+import it.unibo.yahm.sensors.GpsData
+import it.unibo.yahm.sensors.ReactiveSensor
+import it.unibo.yahm.sensors.SensorType
 import java.util.*
 import kotlin.math.*
+import it.unibo.yahm.R
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -95,7 +99,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         //fixCameraPerspective()
     }
 
-    private fun updateCameraLocation(location: LatLng, zoom: Float = ZOOM, tilt: Float = TILT, bearing: Float = BEARING) {
+    private fun updateCameraLocation(
+        location: LatLng,
+        zoom: Float = ZOOM,
+        tilt: Float = TILT,
+        bearing: Float = BEARING
+    ) {
         val cameraUpdate = CameraPosition.Builder()
             .target(location)
             .zoom(zoom)
@@ -112,7 +121,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val displayMetrics = DisplayMetrics()
         windowManager.defaultDisplay.getMetrics(displayMetrics) //not needed?
         val displayHeight = displayMetrics.heightPixels
-        centerPoint.y = centerPoint.y - (displayHeight / 4.5).toInt() // move center down for approx 22%
+        centerPoint.y =
+            centerPoint.y - (displayHeight / 4.5).toInt() // move center down for approx 22%
         val newCenterPoint = projection.fromScreenLocation(centerPoint)
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newCenterPoint, ZOOM))
     }
@@ -170,7 +180,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val gyroscope = reactiveSensors!!.observerFor(SensorType.GYROSCOPE)
 
         gps.subscribe {
-            Log.d("MapActivity", "GPS Update: ${{(it as GpsData).latitude; it.longitude }}")
+            Log.d("MapActivity", "GPS Update: ${{ (it as GpsData).latitude; it.longitude }}")
             updateCarLocation(Pair((it as GpsData).latitude, it.longitude))
         }
 
@@ -208,7 +218,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 .icon(markerIcon)
         )
     }
-
 
 
     /* Get segment's bearing the user is navigating */

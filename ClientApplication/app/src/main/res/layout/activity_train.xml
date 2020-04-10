@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="it.unibo.yahm.train.TrainingActivity">
+
+    <LinearLayout
+        android:id="@+id/linearLayout2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="1dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="16dp"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <Button
+            android:id="@+id/start"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="205dp"
+            android:layout_height="163dp"
+            android:layout_weight="1"
+            android:background="@android:color/holo_green_light"
+            android:text="@string/start" />
+
+        <Button
+            android:id="@+id/stop"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="205dp"
+            android:layout_height="163dp"
+            android:layout_weight="1"
+            android:background="@android:color/holo_red_light"
+            android:text="@string/stop" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <Button
+            android:id="@+id/spotHole"
+            android:layout_width="match_parent"
+            android:layout_height="95dp"
+            android:text="@string/spotHole" />
+
+        <Button
+            android:id="@+id/spotManHole"
+            android:layout_width="match_parent"
+            android:layout_height="95dp"
+            android:text="@string/manHole" />
+
+        <Button
+            android:id="@+id/spotBack"
+            android:layout_width="match_parent"
+            android:layout_height="95dp"
+            android:text="@string/spotBack" />
+
+        <Button
+            android:id="@+id/spotRoadJoint"
+            android:layout_width="match_parent"
+            android:layout_height="95dp"
+            android:text="@string/roadJoint" />
+    </LinearLayout>
+
+</LinearLayout>
