@@ -1,21 +1,10 @@
-package it.unibo.yahm.clientapplication
+package it.unibo.yahm.client
 
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import android.Manifest
-import android.content.pm.PackageManager
-import android.util.Log
-import android.view.View
-import android.widget.Toast
-import androidx.core.app.ActivityCompat
-import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.disposables.Disposable
-import java.io.*
-import java.text.DateFormat
-import java.util.*
-import kotlin.system.exitProcess
+import it.unibo.yahm.R
 
 
 class MainActivity : AppCompatActivity() {

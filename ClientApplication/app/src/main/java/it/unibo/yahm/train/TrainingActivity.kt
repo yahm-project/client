@@ -1,4 +1,4 @@
-package it.unibo.yahm.trainingapplication
+package it.unibo.yahm.train
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -11,14 +11,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat.*
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
-import it.unibo.yahm.clientapplication.R
-import it.unibo.yahm.rxsensor.*
+import it.unibo.yahm.R
+import it.unibo.yahm.sensors.*
 import java.io.*
 import java.text.DateFormat
 import java.util.*
 import kotlin.system.exitProcess
 
-class MainActivity : AppCompatActivity() {
+class TrainingActivity : AppCompatActivity() {
     private var reactiveSensor: ReactiveSensor? = null
     private var gpsData: Observable<SensorData>? = null
     private var disposable: Disposable? = null
@@ -27,20 +27,28 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        /*val startButton = findViewById<Button>(R.id.start)
+        setContentView(R.layout.activity_train)
+        val startButton = findViewById<Button>(R.id.start)
         val stopButton = findViewById<Button>(R.id.stop)
         val spotHoleButton = findViewById<Button>(R.id.spotHole)
         val spotBackButton = findViewById<Button>(R.id.spotBack)
         val spotRoadJointButton = findViewById<Button>(R.id.spotRoadJoint)
         val spotManHoleButton = findViewById<Button>(R.id.spotManHole)
         stopButton.isEnabled = false
-        spotHoleButton.isEnabled= false
-        spotBackButton.isEnabled= false
-        spotManHoleButton.isEnabled= false
-        spotRoadJointButton.isEnabled= false
+        spotHoleButton.isEnabled = false
+        spotBackButton.isEnabled = false
+        spotManHoleButton.isEnabled = false
+        spotRoadJointButton.isEnabled = false
         reactiveSensor = ReactiveSensor(applicationContext)
-        requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE), 1)
+        requestPermissions(
+            this,
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ),
+            1
+        )
 
         startButton.setOnClickListener {
             val dateAndTime = DateFormat.getDateTimeInstance().format(Date())
@@ -51,7 +59,8 @@ class MainActivity : AppCompatActivity() {
             val accelerometerData = reactiveSensor!!.observerFor(SensorType.ACCELEROMETER)
             val gyroscopeData = reactiveSensor!!.observerFor(SensorType.GYROSCOPE)
             gpsData = reactiveSensor!!.observerFor(SensorType.GPS)
-            val combinedStream: Observable<CombinedSensorsData> = Combiner.create().combine(accelerometerData, gyroscopeData, gpsData!!)
+            val combinedStream: Observable<CombinedSensorsData> =
+                Combiner.create().combine(accelerometerData, gyroscopeData, gpsData!!)
             disposable = combinedStream.map {
                 "${System.currentTimeMillis()},${it.xAcceleration},${it.yAcceleration},${it.zAcceleration}," +
                         "${it.xAngularVelocity},${it.yAngularVelocity},${it.zAngularVelocity}," +
@@ -60,13 +69,16 @@ class MainActivity : AppCompatActivity() {
                 writeOnFile(toWrite = *it.toTypedArray(), file = sensorDatasFile!!)
             }
             stopButton.isEnabled = true
-            spotHoleButton.isEnabled= true
-            spotBackButton.isEnabled= true
-            spotManHoleButton.isEnabled= true
-            spotRoadJointButton.isEnabled= true
+            spotHoleButton.isEnabled = true
+            spotBackButton.isEnabled = true
+            spotManHoleButton.isEnabled = true
+            spotRoadJointButton.isEnabled = true
             startButton.isEnabled = false
             val spotButtonClickListener = View.OnClickListener {
-                writeOnFile("${System.currentTimeMillis()},${(it as Button).text}", file = userClicksFile!!)
+                writeOnFile(
+                    "${System.currentTimeMillis()},${(it as Button).text}",
+                    file = userClicksFile!!
+                )
             }
             spotHoleButton.setOnClickListener(spotButtonClickListener)
             spotBackButton.setOnClickListener(spotButtonClickListener)
@@ -77,21 +89,25 @@ class MainActivity : AppCompatActivity() {
         stopButton.setOnClickListener {
             disposable!!.dispose()
             stopButton.isEnabled = false
-            spotHoleButton.isEnabled= false
-            spotBackButton.isEnabled= false
-            spotManHoleButton.isEnabled= false
-            spotRoadJointButton.isEnabled= false
+            spotHoleButton.isEnabled = false
+            spotBackButton.isEnabled = false
+            spotManHoleButton.isEnabled = false
+            spotRoadJointButton.isEnabled = false
             startButton.isEnabled = true
             sensorDatasFile!!.close()
             userClicksFile!!.close()
-        }*/
+        }
     }
 
     private fun createFile(fileName: String): FileUtils {
         try {
             return FileUtils(fileName, applicationContext)
         } catch (fileNotFound: FileNotFoundException) {
-            Toast.makeText(applicationContext, "Unable to find or create specified file!", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                applicationContext,
+                "Unable to find or create specified file!",
+                Toast.LENGTH_LONG
+            ).show()
             exitProcess(1)
         }
     }
@@ -105,11 +121,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-       grantResults.forEach { Log.i("YAHM", it.toString()) }
-        when(requestCode) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        grantResults.forEach { Log.i("YAHM", it.toString()) }
+        when (requestCode) {
             1 -> {
-                if(grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED} ){
+                if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
                     gpsData = reactiveSensor!!.observerFor(SensorType.GPS)
                 } else {
                     this.finish()
@@ -120,7 +140,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val CSV_SENSOR_HEADER = "Timestamp,xAcc,yAcc,zAcc,xAngVel,yAngVel,zAngVel,lat,lon,speed"
+        private const val CSV_SENSOR_HEADER =
+            "Timestamp,xAcc,yAcc,zAcc,xAngVel,yAngVel,zAngVel,lat,lon,speed"
         private const val BUFFERED_ELEMENT = 3
         private const val CSV_USER_CLICK_HEADER = "Timestamp,obj"
     }

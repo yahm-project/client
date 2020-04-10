@@ -1,8 +1,8 @@
-package it.unibo.yahm.rxsensor
+package it.unibo.yahm.sensors
 
 import io.reactivex.rxjava3.core.Observable
 
-class BufferedSubject<T>(private val predicate: (MutableCollection<T>) -> Boolean ) {
+class BufferedSubject<T>(private val predicate: (MutableCollection<T>) -> Boolean) {
 
     private var buffer: MutableCollection<T> = mutableListOf()
 

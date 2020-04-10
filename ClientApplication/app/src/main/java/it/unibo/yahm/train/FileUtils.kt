@@ -1,4 +1,4 @@
-package it.unibo.yahm.trainingapplication
+package it.unibo.yahm.train
 
 import android.content.Context
 import java.io.*
@@ -6,7 +6,8 @@ import java.lang.StringBuilder
 
 class FileUtils(fileName: String, context: Context) {
     //can throw java.io.FileNotFoundException
-    private val outputStreamWriter = OutputStreamWriter(context.openFileOutput(fileName, Context.MODE_APPEND))
+    private val outputStreamWriter =
+        OutputStreamWriter(context.openFileOutput(fileName, Context.MODE_APPEND))
     private val inputStream: InputStream = context.openFileInput(fileName)
 
     //can throw java.io.IOException

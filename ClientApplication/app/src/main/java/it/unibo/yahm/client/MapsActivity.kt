@@ -1,4 +1,4 @@
-package it.unibo.yahm.clientapplication
+package it.unibo.yahm.client
 
 import android.graphics.Point
 import android.os.Bundle
@@ -12,13 +12,16 @@ import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import it.unibo.yahm.clientapplication.Utilities.DrawableUtils
-import it.unibo.yahm.rxsensor.CompassData
-import it.unibo.yahm.rxsensor.GpsData
-import it.unibo.yahm.rxsensor.ReactiveSensor
-import it.unibo.yahm.rxsensor.SensorType
+import it.unibo.yahm.client.utils.DrawableUtils
+import it.unibo.yahm.sensors.CompassData
+import it.unibo.yahm.sensors.GpsData
+import it.unibo.yahm.sensors.ReactiveSensor
+import it.unibo.yahm.sensors.SensorType
 import java.util.*
 import kotlin.math.*
+import it.unibo.yahm.R
+import it.unibo.yahm.clientapplication.RoadIssue
+
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -61,7 +64,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         carMarker = addCarMarker(DEFAULT_LOCATION!!, BEARING)
-        //updateCameraLocation(carMarker!!.position)
+        updateCameraLocation(carMarker!!.position)
         observeCarSensors()
     }
 
@@ -156,53 +159,52 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         La mappa deve adattare il proprio orientamento facendo in modo che il marker sia sempre rivolto verso l'alto,
         questo richiede che la mappa e la camera ruotino in sincronia non appena la rotazione dell'auto superi un certo delta rispetto ad essi.
     */
-    private fun updateRotation(targetRotation: Int) {
-        val handler = Handler()
-        val start = SystemClock.uptimeMillis()
-        val currentRotation = carMarker!!.rotation
-        val duration: Long = 500
-        val interpolator = LinearInterpolator()
+    var currentTargetRotation = 9999
+    val duration: Long = 500
+    val rotationHandler = Handler()
+    private fun updateRotation(newTargetRotation: Int) {
+        if(currentTargetRotation - newTargetRotation > DELTA_ROTATION) {
+            val start = SystemClock.uptimeMillis()
+            val currentRotation = carMarker!!.rotation
+            val interpolator = LinearInterpolator()
 
-        val rotateCar = object : Runnable {
-            override fun run() {
-                val elapsed = SystemClock.uptimeMillis() - start
-                val t: Float = interpolator.getInterpolation(elapsed.toFloat() / duration)
-                val newRotation: Float = t * targetRotation + (1 - t) * currentRotation
-                runOnUiThread {
-                    carMarker!!.rotation = newRotation
-                }
-                if (t < 1.0) { // Post again 16ms later.
-                    handler.postDelayed(this, 16)
+            val rotateCar = object : Runnable {
+                override fun run() {
+                    currentTargetRotation = newTargetRotation
+                    val elapsed = SystemClock.uptimeMillis() - start
+                    val t: Float = interpolator.getInterpolation(elapsed.toFloat() / duration)
+                    val newRotation: Float = t * currentTargetRotation + (1 - t) * currentRotation
+                    runOnUiThread {
+                        carMarker!!.rotation = newRotation
+                    }
+                    if (t < 1.0) { // Post again 16ms later.
+                        rotationHandler.postDelayed(this, 16)
+                    }
                 }
             }
-        }
-        val rotateCamera = object : Runnable {
-            override fun run() {
-                val elapsed = SystemClock.uptimeMillis() - start
-                val t: Float = interpolator.getInterpolation(elapsed.toFloat() / duration)
-                val newRotation: Float = t * targetRotation + (1 - t) * currentRotation
-
-                val cameraUpdate = CameraPosition.Builder()
-                    .target(carMarker!!.position)
-                    .zoom(ZOOM)
-                    .bearing(newRotation)
-                    .tilt(TILT)
-                    .build();
-                runOnUiThread {
-                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraUpdate))
-                }
-                if (t < 1.0) { // Post again 16ms later.
-                    handler.postDelayed(this, 16)
+            val rotateCamera = object : Runnable {
+                override fun run() {
+                    val cameraUpdate = CameraPosition.Builder()
+                        .target(carMarker!!.position)
+                        .zoom(ZOOM)
+                        .bearing(newTargetRotation.toFloat())
+                        .tilt(TILT)
+                        .build();
+                    runOnUiThread {
+                        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraUpdate))
+                    }
                 }
             }
-        }
-        if (abs(mMap.cameraPosition.bearing - carMarker!!.rotation) < DELTA_ROTATION) {
-            handler.post(rotateCar)
-        } else {
-            handler.post(rotateCar)
-            handler.post(rotateCamera)
-        }
 
+            if (abs(mMap.cameraPosition.bearing - carMarker!!.rotation) < DELTA_ROTATION) {
+                Log.d("MapActivity", "Rotating only the car marker")
+                rotationHandler.post(rotateCar)
+            } else {
+                Log.d("MapActivity", "Rotating everything")
+                rotationHandler.post(rotateCar)
+                rotationHandler.post(rotateCamera)
+            }
+        }
     }
 
     private fun observeCarSensors() {
@@ -223,7 +225,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
 
-
+        /*
         //TODO: remove the following, just for debug
         val handler = Handler()
         var testPos = Pair(carMarker!!.position.latitude, carMarker!!.position.longitude)
@@ -234,7 +236,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 handler.postDelayed(this, 5000)
             }
         }
-        handler.post(handlerCode)
+        handler.post(handlerCode)*/
     }
 
     private fun addCarMarker(latLng: LatLng, rotation: Float): Marker {

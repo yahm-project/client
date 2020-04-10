@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="it.unibo.yahm.trainingapplication.MainActivity">
+    tools:context="it.unibo.yahm.train.TrainingActivity">
 
     <Button
         android:id="@+id/showMap"
