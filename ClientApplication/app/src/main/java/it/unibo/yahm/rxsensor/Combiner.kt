@@ -1,4 +1,4 @@
-package it.unibo.yahm.clientapplication
+package it.unibo.yahm.rxsensor
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.kotlin.combineLatest
 

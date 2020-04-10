@@ -1,18 +1,18 @@
-package it.unibo.yahm.clientapplication
+package it.unibo.yahm.trainingapplication
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import com.google.android.gms.location.LocationServices
+import androidx.core.app.ActivityCompat.*
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
+import it.unibo.yahm.clientapplication.R
+import it.unibo.yahm.rxsensor.*
 import java.io.*
 import java.text.DateFormat
 import java.util.*
@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
         spotManHoleButton.isEnabled= false
         spotRoadJointButton.isEnabled= false
         reactiveSensor = ReactiveSensor(applicationContext)
-        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE), 1)
+        requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE), 1)
 
         startButton.setOnClickListener {
             val dateAndTime = DateFormat.getDateTimeInstance().format(Date())

@@ -12,13 +12,20 @@
     <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="Show only selected application" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bb425309-be84-4694-b227-41d95a0ecbbb" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/clientapplication/FileUtils.kt" afterDir="false" />
+    <list default="true" id="a41a435e-c452-406c-8f6b-c64a30f14959" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/caches/build_file_checksums.ser" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/build_file_checksums.ser" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/AndroidManifest.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/clientapplication/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/clientapplication/MainActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/clientapplication/BufferedSubject.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/rxsensor/BufferedSubject.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/clientapplication/CombinedSensorsData.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/rxsensor/CombinedSensorsData.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/clientapplication/Combiner.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/rxsensor/Combiner.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/clientapplication/FileUtils.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/trainingapplication/FileUtils.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/clientapplication/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/trainingapplication/MainActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/clientapplication/ReactiveSensors.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/rxsensor/ReactiveSensors.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/clientapplication/SensorData.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/rxsensor/SensorData.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/clientapplication/SensorType.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/it/unibo/yahm/rxsensor/SensorType.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/res/layout/activity_main.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/layout/activity_main.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/res/values/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/res/values/strings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/it/unibo/yahm/clientapplication/ExampleUnitTest.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/it/unibo/yahm/clientapplication/ExampleUnitTest.kt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -26,7 +33,7 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="R58N3034GLP" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="Pixel_2_API_29" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -78,6 +85,15 @@
   </component>
   <component name="PsdUISettings">
     <option name="MODULE_TAB" value="Default Config" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveKotlinTopLevelDeclarationsDialog.RECENTS_KEY">
+      <recent name="it.unibo.yahm.trainingapplication" />
+      <recent name="it.unibo.yahm.rxsensor" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\Unibo\YAHM\ClientApplication\app\src\main\java\it\unibo\yahm\rxsensor" />
+    </key>
   </component>
   <component name="RunAnythingCache">
     <option name="myCommands">

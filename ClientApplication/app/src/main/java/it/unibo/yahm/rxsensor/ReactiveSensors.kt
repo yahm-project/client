@@ -1,4 +1,4 @@
-package it.unibo.yahm.clientapplication
+package it.unibo.yahm.rxsensor
 
 import android.Manifest
 import android.content.Context

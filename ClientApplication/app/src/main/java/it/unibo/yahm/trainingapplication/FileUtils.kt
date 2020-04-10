@@ -1,7 +1,6 @@
-package it.unibo.yahm.clientapplication
+package it.unibo.yahm.trainingapplication
 
 import android.content.Context
-import android.util.Log
 import java.io.*
 import java.lang.StringBuilder
 
@@ -26,7 +25,7 @@ class FileUtils(fileName: String, context: Context) {
         val bufferedReader = BufferedReader(inputStreamReader)
 
         for (line in bufferedReader.lines()) {
-            stringBuilder.append("\n").append(line);
+            stringBuilder.append("\n").append(line)
         }
         return stringBuilder.toString()
     }
