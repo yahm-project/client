@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val startButton = findViewById<Button>(R.id.start)
+        /*val startButton = findViewById<Button>(R.id.start)
         val stopButton = findViewById<Button>(R.id.stop)
         val spotHoleButton = findViewById<Button>(R.id.spotHole)
         val spotBackButton = findViewById<Button>(R.id.spotBack)
@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity() {
             startButton.isEnabled = true
             sensorDatasFile!!.close()
             userClicksFile!!.close()
-        }
+        }*/
     }
 
     private fun createFile(fileName: String): FileUtils {

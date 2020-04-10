@@ -100,6 +100,38 @@ class ReactiveSensor(private val context: Context) {
         return getObservableIfPresentOrExecuteAction(sensorType, action)
     }
 
+    private fun observeRotationVector(sensorType: SensorType): Observable<SensorData> {
+        val sensorIntType = sensorIntType(sensorType.toString())
+        val action: () -> Observable<SensorData> = {
+            val sensor = sensorManager.getDefaultSensor(sensorIntType)
+
+            val observableToReturn: Observable<SensorData> = Observable.create {
+                val listener = object : SensorEventListener {
+                    val orientation =  FloatArray(3)
+                    val rMat =  FloatArray(9)
+
+                    override fun onAccuracyChanged(sensor: Sensor, accuracy: Int ) {}
+
+                    override fun onSensorChanged( event: SensorEvent ) {
+                        if( event.sensor.type == Sensor.TYPE_ROTATION_VECTOR ){
+                            // calculate th rotation matrix
+                            SensorManager.getRotationMatrixFromVector( rMat, event.values );
+                            // get the azimuth value (orientation[0]) in degree
+                            val azimuth: Int = ((Math.toDegrees(SensorManager.getOrientation( rMat, orientation )[0].toDouble()) + 360 ) % 360).toInt()
+                            it.onNext(getSensorDataBasedOnSensorType(sensorType.toString(), arrayOf(azimuth)))
+                        }
+                    }
+                }
+                sensorManager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+                listeners[sensorIntType] = listener
+            }
+            observables[sensorType] = observableToReturn
+            observableToReturn
+        }
+        return getObservableIfPresentOrExecuteAction(sensorType, action)
+    }
+
+
     fun observerFor(sensorType: SensorType): Observable<SensorData> {
         return when (sensorType) {
             SensorType.ACCELEROMETER, SensorType.GYROSCOPE -> {
@@ -107,6 +139,10 @@ class ReactiveSensor(private val context: Context) {
             }
             SensorType.GPS -> {
                 observeGPS(sensorType)
+            }
+            SensorType.ROTATION_VECTOR ->
+            {
+                observeRotationVector(sensorType)
             }
         }
     }
@@ -142,6 +178,9 @@ class ReactiveSensor(private val context: Context) {
             }
             "GPS" -> {
                 GpsData(latitude = values[0].toDouble(), longitude = values[1].toDouble(), speed = values[2].toFloat())
+            }
+            "ROTATION_VECTOR" -> {
+                CompassData(orientation = values[0].toInt())
             }
             else -> throw IllegalArgumentException("Invalid type: $sensorType")
         }
