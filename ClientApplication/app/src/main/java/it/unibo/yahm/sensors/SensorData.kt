@@ -18,9 +18,10 @@ data class GyroscopeData(
 data class GpsData(
     val latitude: Double,
     val longitude: Double,
-    val speed: Float
+    val speed: Float,
+    val bearing: Float
 ) : SensorData
 
 data class CompassData(
-    val orientation: Int
+    val orientation: Float
 ) : SensorData

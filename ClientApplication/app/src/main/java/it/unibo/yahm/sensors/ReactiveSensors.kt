@@ -118,7 +118,7 @@ class ReactiveSensor(private val context: Context) {
                     latestLocation.onNext(
                         getSensorDataBasedOnSensorType(
                             sensorType.toString(),
-                            arrayOf(location.latitude, location.longitude, location.speed)
+                            arrayOf(location.latitude, location.longitude, location.speed, location.bearing)
                         )
                     )
                 }
@@ -147,7 +147,7 @@ class ReactiveSensor(private val context: Context) {
                             // calculate th rotation matrix
                             SensorManager.getRotationMatrixFromVector( rMat, event.values );
                             // get the azimuth value (orientation[0]) in degree
-                            val azimuth: Int = ((Math.toDegrees(SensorManager.getOrientation( rMat, orientation )[0].toDouble()) + 360 ) % 360).toInt()
+                            val azimuth: Float = ((Math.toDegrees(SensorManager.getOrientation( rMat, orientation )[0].toDouble()) + 360 ) % 360).toFloat()
                             it.onNext(getSensorDataBasedOnSensorType(sensorType.toString(), arrayOf(azimuth)))
                         }
                     }
@@ -221,11 +221,12 @@ class ReactiveSensor(private val context: Context) {
                 GpsData(
                     latitude = values[0].toDouble(),
                     longitude = values[1].toDouble(),
-                    speed = values[2].toFloat()
+                    speed = values[2].toFloat(),
+                    bearing = values[3].toFloat()
                 )
             }
             "ROTATION_VECTOR" -> {
-                CompassData(orientation = values[0].toInt())
+                CompassData(orientation = values[0].toFloat())
             }
             else -> throw IllegalArgumentException("Invalid type: $sensorType")
         }
