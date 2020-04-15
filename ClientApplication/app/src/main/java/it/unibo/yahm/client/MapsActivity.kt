@@ -1,11 +1,9 @@
 package it.unibo.yahm.client
 
-import com.google.maps.android.SphericalUtil
 import it.unibo.yahm.R
 import android.graphics.Point
 import android.os.Bundle
 import android.os.Handler
-import android.os.Looper
 import android.os.SystemClock
 import android.util.DisplayMetrics
 import android.util.Log
@@ -31,8 +29,9 @@ import kotlin.math.sin
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     companion object {
-        private val DEFAULT_LOCATION = LatLng(44.133331, 12.233333)
-        private const val DELTA_ROTATION: Int = 10
+        private val DEFAULT_LOCATION = LatLng(45.133331, 12.233333)
+        private const val DELTA_TRIGGER_ROTATION: Int = 15
+        private const val DELTA_CAMERA_ROTATION: Int = 45
         private const val ZOOM: Float = 17f
         private const val TILT: Float = 45f
         private const val BEARING: Float = 0f
@@ -43,6 +42,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var drawedRoadSegmentStatus: List<Polyline> = Collections.emptyList()
     private var drawedRoadIssues: List<Marker> = Collections.emptyList()
     private var reactiveSensors: ReactiveSensor? = null
+    private var currentCameraBearing = BEARING
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,13 +67,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
      */
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-        carMarker = addCarMarker(DEFAULT_LOCATION!!, BEARING)
-        updateCameraLocation(carMarker!!.position)
         observeCarSensors()
     }
 
     fun drawRoadSegmentStatus(coordinates: List<Pair<Double, Double>>, argbColor: Int) {
-        runOnUiThread{
+        runOnUiThread {
             val polyline = mMap.addPolyline(
                 PolylineOptions().addAll(coordinates.map { LatLng(it.first, it.second) })
                     .color(argbColor)
@@ -83,7 +81,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     fun drawRoadIssueOnPoint(coordinate: Pair<Double, Double>, issue: RoadIssue) {
-        val drawable = when (issue){
+        val drawable = when (issue) {
             RoadIssue.POT_HOLE -> R.drawable.ic_up_arrow_circle
             RoadIssue.ROAD_DRAIN -> R.drawable.ic_up_arrow_circle
             RoadIssue.SPEED_BUMP -> R.drawable.ic_up_arrow_circle
@@ -93,7 +91,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val circleDrawable = ContextCompat.getDrawable(applicationContext, drawable)
         val markerIcon = DrawableUtils.getMarkerIconFromDrawable(circleDrawable!!)
 
-        runOnUiThread{
+        runOnUiThread {
             drawedRoadIssues += mMap.addMarker(
                 MarkerOptions()
                     .position(LatLng(coordinate.first, coordinate.second))
@@ -103,13 +101,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun updateCarLocation(location: Pair<Double, Double>) {
+    private fun updateCarLocation(newCoordinates: LatLng) {
         val handler = Handler()
-        val newCoordinates = LatLng(location.first, location.second)
         val start = SystemClock.uptimeMillis()
-        val proj: Projection = mMap.projection
-        val startPoint: Point = proj.toScreenLocation(carMarker!!.position)
-        val startLatLng = proj.fromScreenLocation(startPoint)
+        val projection: Projection = mMap.projection
+        val startPoint: Point = projection.toScreenLocation(carMarker!!.position)
+        val startLatLng = projection.fromScreenLocation(startPoint)
         val duration: Long = 500
         val interpolator = LinearInterpolator()
 
@@ -117,18 +114,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             override fun run() {
                 val elapsed = SystemClock.uptimeMillis() - start
                 val t: Float = interpolator.getInterpolation(elapsed.toFloat() / duration)
-                val lng: Double = t * newCoordinates.longitude + (1 - t) * startLatLng.longitude
-                val lat: Double = t * newCoordinates.latitude + (1 - t) * startLatLng.latitude
-                runOnUiThread { carMarker!!.position = LatLng(lat, lng) }
 
-                if (t < 1.0) { // Post again 16ms later.
+                if(t > 1.0 ) {
+                    updateCameraLocation(location = newCoordinates, bearing = currentCameraBearing)
+                    runOnUiThread { carMarker!!.position = LatLng(newCoordinates.latitude, newCoordinates.longitude) }
+                } else {
+                    val lng: Double = t * newCoordinates.longitude + (1 - t) * startLatLng.longitude
+                    val lat: Double = t * newCoordinates.latitude + (1 - t) * startLatLng.latitude
+                    runOnUiThread { carMarker!!.position = LatLng(lat, lng) }
                     handler.postDelayed(this, 16)
                 }
             }
         }
         handler.post(runnableCode)
-        updateCameraLocation(LatLng(location.first, location.second))
-        //fixCameraPerspective()
+
     }
 
     private fun updateCameraLocation(
@@ -143,6 +142,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             .tilt(tilt)
             .bearing(bearing)
             .build();
+        currentCameraBearing = bearing
         runOnUiThread { mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraUpdate)) }
     }
 
@@ -156,12 +156,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         centerPoint.y =
             centerPoint.y - (displayHeight / 4.5).toInt() // move center down for approx 22%
         val newCenterPoint = projection.fromScreenLocation(centerPoint)
-        runOnUiThread { mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newCenterPoint, ZOOM)) }
+        runOnUiThread {
+            mMap.animateCamera(
+                CameraUpdateFactory.newLatLngZoom(
+                    newCenterPoint,
+                    ZOOM
+                )
+            )
+        }
     }
 
     private fun rotationGap(first: Float, second: Float): Float {
         val rotationDelta: Float = (abs(first - second) % 360.0f)
-        return if(rotationDelta > 180.0f) (360.0f - rotationDelta) else rotationDelta
+        return if (rotationDelta > 180.0f) (360.0f - rotationDelta) else rotationDelta
     }
 
     /*
@@ -169,40 +176,40 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         questo richiede che la mappa e la camera ruotino in sincronia non appena la rotazione dell'auto superi un certo delta rispetto ad essi.
     */
     private var isRotating = false
-    private var currentTargetRotation = BEARING
-    private val duration: Long = 1000
+    private var currentCarTargetRotation = BEARING
+    private val duration: Long = 500
     private val carRotationHandler = Handler()
     private fun updateRotation(newTargetRotation: Float) {
-        if(!isRotating) {
+        if (rotationGap(currentCarTargetRotation, newTargetRotation) > DELTA_TRIGGER_ROTATION && !isRotating) {
+            currentCarTargetRotation = newTargetRotation
             val start = SystemClock.uptimeMillis()
-            val startRotation  = carMarker!!.rotation
+            val currentRotation = carMarker!!.rotation
             val interpolator = LinearInterpolator()
-            currentTargetRotation = newTargetRotation
 
             val rotateCar = object : Runnable {
                 override fun run() {
                     isRotating = true
                     val elapsed = SystemClock.uptimeMillis() - start
                     val t: Float = interpolator.getInterpolation(elapsed.toFloat() / duration)
-                    val newRotation: Float = (startRotation * (1-t) + currentTargetRotation * t)
-                    Log.d("MapActivity", "newRot: $newTargetRotation")
-                    runOnUiThread {
-                        carMarker!!.rotation = newRotation
-                    }
+                    val newRotation: Float = t * currentCarTargetRotation + (1 - t) * currentRotation
+
                     if (t < 1.0) { // Post again 16ms later.
+                        runOnUiThread { carMarker!!.rotation = newRotation }
                         carRotationHandler.postDelayed(this, 16)
                     } else {
                         isRotating = false
                     }
                 }
             }
-            Log.d("MapActivity", "Rotating only the car marker")
-            carRotationHandler.post(rotateCar)
-        }
 
-        if(rotationGap(mMap.cameraPosition.bearing, currentTargetRotation) >= DELTA_ROTATION) {
-            Log.d("MapActivity", "Rotating everything")
-            updateCameraLocation(location = carMarker!!.position, bearing = newTargetRotation)
+            if (rotationGap(mMap.cameraPosition.bearing, newTargetRotation) < DELTA_CAMERA_ROTATION) {
+                Log.d("MapActivity", "Rotating only the car")
+                carRotationHandler.post(rotateCar)
+            } else {
+                Log.d("MapActivity", "Rotating everything")
+                carRotationHandler.post(rotateCar)
+                updateCameraLocation(location = carMarker!!.position, bearing = newTargetRotation)
+            }
         }
     }
 
@@ -212,13 +219,16 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         gps.observeOn(AndroidSchedulers.mainThread())
             .subscribe {
-                val coordinates = Pair((it as GpsData).latitude, it.longitude)
+                val coordinates = LatLng((it as GpsData).latitude, it.longitude)
                 Log.d("MapActivity", "GPS Update: $coordinates")
+                if(carMarker == null) {
+                    carMarker = addCarMarker(coordinates, BEARING)
+                }
                 updateCarLocation(coordinates)
             }
         compass.observeOn(AndroidSchedulers.mainThread()).subscribe {
             val orientation = (it as CompassData).orientation
-            Log.d("MapActivity", "$orientation")
+            //Log.d("MapActivity", "$orientation")
             updateRotation(orientation);
         }
 
