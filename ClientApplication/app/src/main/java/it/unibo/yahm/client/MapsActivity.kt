@@ -67,6 +67,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
      */
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+        carMarker = addCarMarker(DEFAULT_LOCATION, BEARING)
         observeCarSensors()
     }
 
@@ -221,9 +222,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             .subscribe {
                 val coordinates = LatLng((it as GpsData).latitude, it.longitude)
                 Log.d("MapActivity", "GPS Update: $coordinates")
-                if(carMarker == null) {
-                    carMarker = addCarMarker(coordinates, BEARING)
-                }
                 updateCarLocation(coordinates)
             }
         compass.observeOn(AndroidSchedulers.mainThread()).subscribe {
