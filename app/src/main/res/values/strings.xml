@@ -2,6 +2,7 @@
     <string name="app_name">YAHM</string>
     <string name="title_activity_maps">Map</string>
     <string name="title_activity_training">Training</string>
+    <string name="title_activity_simulation">Simulation</string>
     <string name="show_map">Show Map</string>
     <string name="show_training">Show Training</string>
     <string name="spotHole">Buca</string>

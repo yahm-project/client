@@ -1,7 +1,6 @@
 package it.unibo.yahm.client
 
 import io.reactivex.rxjava3.core.Observable
-import it.unibo.yahm.client.sensors.BufferedSubject
 import org.junit.Test
 
 /**

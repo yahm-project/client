@@ -1,4 +1,4 @@
-package it.unibo.yahm.client
+package it.unibo.yahm.client.activities
 
 import it.unibo.yahm.R
 import android.graphics.Point
@@ -12,12 +12,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import it.unibo.yahm.client.RoadIssue
 import it.unibo.yahm.client.utils.DrawableUtils
-import it.unibo.yahm.client.sensors.CompassData
-import it.unibo.yahm.client.sensors.GpsData
 import it.unibo.yahm.client.sensors.ReactiveSensor
-import it.unibo.yahm.client.sensors.SensorType
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.atan2
@@ -41,7 +38,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var drawedRoadSegmentStatus: List<Polyline> = Collections.emptyList()
     private var drawedRoadIssues: List<Marker> = Collections.emptyList()
     private var reactiveSensors: ReactiveSensor? = null
-    private var currentCameraBearing = BEARING
+    private var currentCameraBearing =
+        BEARING
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,7 +64,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
      */
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-        carMarker = addCarMarker(DEFAULT_LOCATION, BEARING)
+        carMarker = addCarMarker(
+            DEFAULT_LOCATION,
+            BEARING
+        )
         observeCarSensors()
     }
 
@@ -176,7 +177,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         questo richiede che la mappa e la camera ruotino in sincronia non appena la rotazione dell'auto superi un certo delta rispetto ad essi.
     */
     private var isRotating = false
-    private var currentCarTargetRotation = BEARING
+    private var currentCarTargetRotation =
+        BEARING
     private val duration: Long = 500
     private val carRotationHandler = Handler()
 
@@ -215,6 +217,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun observeCarSensors() {
+        /*
         val gps = reactiveSensors!!.observerFor(SensorType.GPS)
         val compass = reactiveSensors!!.observerFor(SensorType.ROTATION_VECTOR)
 
@@ -229,6 +232,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             //Log.d("MapActivity", "$orientation")
             updateRotation(orientation);
         }
+        */
 
         /*
         //TODO: remove the following, just for debug

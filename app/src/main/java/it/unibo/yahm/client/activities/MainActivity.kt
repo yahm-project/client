@@ -1,11 +1,11 @@
-package it.unibo.yahm.client
+package it.unibo.yahm.client.activities
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import it.unibo.yahm.R
-import it.unibo.yahm.client.training.TrainingActivity
 
 
 class MainActivity : AppCompatActivity() {
@@ -23,6 +23,12 @@ class MainActivity : AppCompatActivity() {
         val showTrainingButton = findViewById<Button>(R.id.showTraining)
         showTrainingButton.setOnClickListener {
             val intent = Intent(this, TrainingActivity::class.java)
+            startActivity(intent)
+        }
+
+        val btnSimulation = findViewById<Button>(R.id.btnSimulation)
+        btnSimulation.setOnClickListener {
+            val intent = Intent(this, SimulationActivity::class.java)
             startActivity(intent)
         }
     }
