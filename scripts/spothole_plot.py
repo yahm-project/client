@@ -21,7 +21,9 @@ class ScrollablePlot:
         self.title = title
         self.events_colors = {
             "Buca": "red",
-            "Giunto": "blue"
+            "Giunto": "blue",
+            "Tombino": "green",
+            "Dosso": "orange"
         }
 
     def set_timestamps(self, timestamps, relative=True):
@@ -88,7 +90,7 @@ def main():
         values_filename = sys.argv[1]
         events_filename = sys.argv[2]
     else:
-        values_filename = "sensor_values2.csv"
+        values_filename = "sensors.csv"
         events_filename = "obstacles.csv"
 
     values = read_csv(values_filename) # timestamp,x_acc,y_acc,z_acc,x_ang_vel,y_ang_vel,z_ang_vel,latitude,longitude,speed

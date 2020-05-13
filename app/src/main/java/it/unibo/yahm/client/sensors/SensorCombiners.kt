@@ -6,7 +6,6 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.functions.BiFunction
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.PublishSubject
-import it.unibo.yahm.client.utils.FunctionUtils.median
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
@@ -79,13 +78,13 @@ class SensorCombiners(reactiveLocation: ReactiveLocation, reactiveSensor: Reacti
             .map { pairs ->
                 val accelerationValues = pairs.map { Acceleration.fromSensorEvent(it.first) }
                 val gyroscopeValues = pairs.map { AngularVelocity.fromSensorEvent(it.second) }
-                val medianTimestamp = ((pairs.map { it.first.timestamp }.median() +
-                        pairs.map { it.second.timestamp }.median()) / 2)
-                val location = timedLocationSubscriber.locationAt(medianTimestamp)
+                val timestamp = System.currentTimeMillis()
+
+                val location = timedLocationSubscriber.locationAt(timestamp)
                 CombinedValues(
                     accelerationValues, gyroscopeValues,
                     if (location != null) GpsLocation.fromLocation(location) else null,
-                    null, medianTimestamp
+                    null, timestamp
                 )
             }.subscribeOn(thread)
     }

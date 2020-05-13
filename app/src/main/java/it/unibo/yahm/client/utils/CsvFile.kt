@@ -20,7 +20,6 @@ class CsvFile(
     fun open() {
         fileName = "${name}_${dateFormat.format(Date())}.csv"
         bufferedWriter = context.openFileOutput(fileName, Context.MODE_PRIVATE).bufferedWriter()
-        bufferedWriter!!.write("# ")
         writeValue(header)
     }
 
