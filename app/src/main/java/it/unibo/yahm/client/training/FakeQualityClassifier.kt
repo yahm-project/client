@@ -1,20 +1,20 @@
 package it.unibo.yahm.client.training
 
-import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.functions.Function
 import it.unibo.yahm.client.entities.Coordinate
 import it.unibo.yahm.client.entities.Quality
-import it.unibo.yahm.client.sensors.StretchQualityInput
-import it.unibo.yahm.client.sensors.StretchQualityOutput
+import it.unibo.yahm.client.sensors.CombinedValues
+import it.unibo.yahm.client.sensors.StretchQuality
 
 
-object FakeQualityClassifier {
+class FakeQualityClassifier : Function<CombinedValues, StretchQuality> {
 
-    fun process(observable: Observable<StretchQualityInput>): Observable<StretchQualityOutput> =
-        observable.map { StretchQualityOutput(
-            Coordinate(it.location.latitude, it.location.longitude),
-            it.location.time,
-            if (it.location.hasAccuracy()) it.location.accuracy.toDouble() else 100.0,
-            Quality.random()
-        ) }
+    override fun apply(t: CombinedValues): StretchQuality {
+        val l = t.location!!
+        return StretchQuality(
+            Coordinate(l.latitude, l.longitude), l.time,
+            l.accuracy?.toDouble() ?: 100.0, Quality.random()
+        )
+    }
 
 }

@@ -14,7 +14,7 @@ import it.unibo.yahm.client.SpotholeService
 import it.unibo.yahm.client.entities.Evaluations
 import it.unibo.yahm.client.sensors.ReactiveLocation
 import it.unibo.yahm.client.sensors.ReactiveSensor
-import it.unibo.yahm.client.sensors.SensorObservers
+import it.unibo.yahm.client.sensors.SensorCombiners
 import it.unibo.yahm.client.sensors.SensorType
 import it.unibo.yahm.client.training.FakeQualityClassifier
 import it.unibo.yahm.client.utils.CsvFile
@@ -61,7 +61,7 @@ class SimulationActivity : AppCompatActivity() {
 
         val reactiveLocation = ReactiveLocation(applicationContext)
         val reactiveSensor = ReactiveSensor(applicationContext)
-        val sensorObservers = SensorObservers(reactiveLocation, reactiveSensor)
+        val sensorCombiners = SensorCombiners(reactiveLocation, reactiveSensor)
 
         startSavingStretches.setOnClickListener {
             startSavingStretches.isEnabled = false
@@ -70,7 +70,7 @@ class SimulationActivity : AppCompatActivity() {
             csvFile.open()
             Log.i("SimulationActivity", "Saving to ${csvFile.fileName!!}")
 
-            FakeQualityClassifier.process(sensorObservers.observeForStretchQualityProcessing())
+            sensorCombiners.combineByStretchLength().map(FakeQualityClassifier())
                 .subscribe({
                     csvFile.writeValue(
                         listOf(
@@ -110,14 +110,14 @@ class SimulationActivity : AppCompatActivity() {
 
         val reactiveLocation = ReactiveLocation(applicationContext)
         val reactiveSensor = ReactiveSensor(applicationContext)
-        val sensorObservers = SensorObservers(reactiveLocation, reactiveSensor)
+        val sensorCombiners = SensorCombiners(reactiveLocation, reactiveSensor)
         val service = retrofit.create(SpotholeService::class.java)
 
         startSendingStretches.setOnClickListener { _ ->
             startSendingStretches.isEnabled = false
             stopSendingStretches.isEnabled = true
 
-            FakeQualityClassifier.process(sensorObservers.observeForStretchQualityProcessing())
+            sensorCombiners.combineByStretchLength().map(FakeQualityClassifier())
                 .buffer(bufferSize, bufferSize - 1)
                 .flatMap { buf ->
                     service.sendEvaluations(

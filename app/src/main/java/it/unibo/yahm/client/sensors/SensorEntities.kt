@@ -49,24 +49,17 @@ data class GpsLocation(
     }
 }
 
-// TODO: rename this shit
-data class StretchQualityInput(
-    val location: Location,
-    val length: Double,
-    val accelerationEvents: List<SensorEvent>,
-    val gyroscopeEvents: List<SensorEvent>
+data class CombinedValues(
+    val accelerationValues: List<Acceleration>,
+    val gyroscopeValues: List<AngularVelocity>,
+    val location: GpsLocation?,
+    val length: Double?,
+    val timestamp: Long
 )
 
-data class StretchQualityOutput(
+data class StretchQuality(
     val position: Coordinate,
     val timestamp: Long,
     val radius: Double,
     val quality: Quality
-)
-
-data class SensorValues(
-    val acceleration: Acceleration,
-    val angularVelocity: AngularVelocity,
-    val timestamp: Long,
-    val gpsLocation: GpsLocation?
 )

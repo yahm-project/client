@@ -7,9 +7,12 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat.*
+import androidx.core.app.ActivityCompat.requestPermissions
 import it.unibo.yahm.R
-import it.unibo.yahm.client.sensors.*
+import it.unibo.yahm.client.sensors.ReactiveLocation
+import it.unibo.yahm.client.sensors.ReactiveSensor
+import it.unibo.yahm.client.sensors.SensorCombiners
+import it.unibo.yahm.client.sensors.SensorType
 import it.unibo.yahm.client.utils.CsvFile
 import it.unibo.yahm.client.utils.FunctionUtils.median
 import kotlin.system.exitProcess
@@ -40,7 +43,7 @@ class TrainingActivity : AppCompatActivity() {
 
         val reactiveSensor = ReactiveSensor(applicationContext)
         val reactiveLocation = ReactiveLocation(applicationContext)
-        val sensorObservers = SensorObservers(reactiveLocation, reactiveSensor)
+        val sensorObservers = SensorCombiners(reactiveLocation, reactiveSensor)
 
         checkPermissions()
 
@@ -62,25 +65,20 @@ class TrainingActivity : AppCompatActivity() {
             Log.i("TrainingActivity", "Saving to ${sensorValuesFile.fileName}")
             Log.i("TrainingActivity", "Saving to ${obstaclesFile.fileName}")
 
-            sensorObservers.observeForSensorValues({ accelerations ->
-                Acceleration(
-                    accelerations.map { it.x }.median(),
-                    accelerations.map { it.y }.median(),
-                    accelerations.map { it.z }.median()
-                )
-            }, { angularVelocities ->
-                AngularVelocity(
-                    angularVelocities.map { it.x }.median(),
-                    angularVelocities.map { it.y }.median(),
-                    angularVelocities.map { it.z }.median()
-                )
-            }, 20).subscribe({
+
+            sensorObservers.combineByTime().subscribe({ cv ->
                 sensorValuesFile.writeValue(
                     listOf(
-                        it.timestamp, it.acceleration.x,
-                        it.acceleration.y, it.acceleration.z, it.angularVelocity.x,
-                        it.angularVelocity.y, it.angularVelocity.z, it.gpsLocation?.latitude,
-                        it.gpsLocation?.longitude, it.gpsLocation?.speed
+                        cv.timestamp,
+                        cv.accelerationValues.map { it.x }.median(),
+                        cv.accelerationValues.map { it.y }.median(),
+                        cv.accelerationValues.map { it.z }.median(),
+                        cv.gyroscopeValues.map { it.x }.median(),
+                        cv.gyroscopeValues.map { it.y }.median(),
+                        cv.gyroscopeValues.map { it.z }.median(),
+                        cv.location?.latitude,
+                        cv.location?.longitude,
+                        cv.location?.speed
                     )
                 )
             }, { it.printStackTrace() })
