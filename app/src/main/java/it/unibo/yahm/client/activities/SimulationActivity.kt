@@ -1,23 +1,24 @@
 package it.unibo.yahm.client.activities
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat.*
-import io.reactivex.schedulers.Schedulers
+import androidx.core.app.ActivityCompat.requestPermissions
+import hu.akarnokd.rxjava3.retrofit.RxJava3CallAdapterFactory
 import it.unibo.yahm.BuildConfig
 import it.unibo.yahm.R
 import it.unibo.yahm.client.SpotholeService
 import it.unibo.yahm.client.entities.Evaluations
-import it.unibo.yahm.client.sensors.*
+import it.unibo.yahm.client.sensors.ReactiveLocation
+import it.unibo.yahm.client.sensors.ReactiveSensor
+import it.unibo.yahm.client.sensors.SensorObservers
+import it.unibo.yahm.client.sensors.SensorType
 import it.unibo.yahm.client.training.FakeQualityClassifier
 import it.unibo.yahm.client.utils.CsvFile
 import retrofit2.Retrofit
-import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 import kotlin.system.exitProcess
 
@@ -29,6 +30,7 @@ class SimulationActivity : AppCompatActivity() {
         setContentView(R.layout.activity_simulation)
         checkPermissions()
         initSavingStretches()
+        initSendingStretches()
     }
 
     override fun onRequestPermissionsResult(
@@ -57,14 +59,17 @@ class SimulationActivity : AppCompatActivity() {
             ), applicationContext
         )
 
+        val reactiveLocation = ReactiveLocation(applicationContext)
+        val reactiveSensor = ReactiveSensor(applicationContext)
+        val sensorObservers = SensorObservers(reactiveLocation, reactiveSensor)
+
         startSavingStretches.setOnClickListener {
+            startSavingStretches.isEnabled = false
+            stopSavingStretches.isEnabled = true
+
             csvFile.open()
             Log.i("SimulationActivity", "Saving to ${csvFile.fileName!!}")
 
-            val sensorObservers = SensorObservers(
-                ReactiveLocation(applicationContext),
-                ReactiveSensor(applicationContext)
-            )
             FakeQualityClassifier.process(sensorObservers.observeForStretchQualityProcessing())
                 .subscribe({
                     csvFile.writeValue(
@@ -77,13 +82,21 @@ class SimulationActivity : AppCompatActivity() {
         }
 
         stopSavingStretches.setOnClickListener {
+            startSavingStretches.isEnabled = true
+            stopSavingStretches.isEnabled = false
+
+            reactiveLocation.dispose()
+            reactiveSensor.dispose(SensorType.ACCELEROMETER)
+            reactiveSensor.dispose(SensorType.GYROSCOPE)
             csvFile.close()
         }
     }
 
-    // TODO: wip
-    @SuppressLint("CheckResult")
-    private fun testServer() {
+    private fun initSendingStretches() {
+        val startSendingStretches = findViewById<Button>(R.id.btnStartSendingStretches)
+        val stopSendingStretches = findViewById<Button>(R.id.btnStopSendingStretches)
+        val bufferSize = 20
+
         val baseUrl = if (BuildConfig.DEBUG) {
             applicationContext.resources.getString(R.string.spothole_service_development_baseurl)
         } else {
@@ -92,22 +105,45 @@ class SimulationActivity : AppCompatActivity() {
 
         val retrofit = Retrofit.Builder().baseUrl(baseUrl)
             .addConverterFactory(GsonConverterFactory.create())
-            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .addCallAdapterFactory(RxJava3CallAdapterFactory.create())
             .build()
 
+        val reactiveLocation = ReactiveLocation(applicationContext)
+        val reactiveSensor = ReactiveSensor(applicationContext)
+        val sensorObservers = SensorObservers(reactiveLocation, reactiveSensor)
         val service = retrofit.create(SpotholeService::class.java)
-        service.sendEvaluations(
-            Evaluations(
-                emptyList(),
-                emptyList(),
-                emptyList(),
-                emptyList(),
-                emptyList()
-            )
-        ).subscribeOn(Schedulers.newThread())
-            .subscribe({ a -> Log.i("aaaa", "ok") }, { e -> Log.i("aaa", e.toString()) })
 
+        startSendingStretches.setOnClickListener { _ ->
+            startSendingStretches.isEnabled = false
+            stopSendingStretches.isEnabled = true
 
+            FakeQualityClassifier.process(sensorObservers.observeForStretchQualityProcessing())
+                .buffer(bufferSize, bufferSize - 1)
+                .flatMap { buf ->
+                    service.sendEvaluations(
+                        Evaluations(
+                            buf.map { it.position },
+                            buf.map { it.timestamp },
+                            buf.map { it.radius },
+                            buf.take(bufferSize - 1).map { it.quality },
+                            emptyList()
+                        )
+                    )
+                }.subscribe({
+                    Log.i("SimulationActivity", "Make request to the server..")
+                }, {
+                    it.printStackTrace()
+                })
+        }
+
+        stopSendingStretches.setOnClickListener {
+            startSendingStretches.isEnabled = true
+            stopSendingStretches.isEnabled = false
+
+            reactiveLocation.dispose()
+            reactiveSensor.dispose(SensorType.ACCELEROMETER)
+            reactiveSensor.dispose(SensorType.GYROSCOPE)
+        }
     }
 
     private fun checkPermissions() {

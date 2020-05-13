@@ -49,10 +49,6 @@ data class GpsLocation(
     }
 }
 
-data class CompassData(
-    val orientation: Float
-)
-
 // TODO: rename this shit
 data class StretchQualityInput(
     val location: Location,
@@ -71,5 +67,6 @@ data class StretchQualityOutput(
 data class SensorValues(
     val acceleration: Acceleration,
     val angularVelocity: AngularVelocity,
+    val timestamp: Long,
     val gpsLocation: GpsLocation?
 )

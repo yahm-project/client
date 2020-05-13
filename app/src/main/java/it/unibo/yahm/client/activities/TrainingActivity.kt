@@ -11,6 +11,7 @@ import androidx.core.app.ActivityCompat.*
 import it.unibo.yahm.R
 import it.unibo.yahm.client.sensors.*
 import it.unibo.yahm.client.utils.CsvFile
+import it.unibo.yahm.client.utils.FunctionUtils.median
 import kotlin.system.exitProcess
 
 
@@ -61,24 +62,22 @@ class TrainingActivity : AppCompatActivity() {
             Log.i("TrainingActivity", "Saving to ${sensorValuesFile.fileName}")
             Log.i("TrainingActivity", "Saving to ${obstaclesFile.fileName}")
 
-            sensorObservers.observeForSensorValues({ accelerations, angularVelocities, gpsLocation ->
-                SensorValues(
-                    Acceleration(
-                        accelerations.map { it.x }.average(),
-                        accelerations.map { it.y }.average(),
-                        accelerations.map { it.z }.average()
-                    ),
-                    AngularVelocity(
-                        angularVelocities.map { it.x }.average(),
-                        angularVelocities.map { it.y }.average(),
-                        angularVelocities.map { it.z }.average()
-                    ),
-                    gpsLocation
+            sensorObservers.observeForSensorValues({ accelerations ->
+                Acceleration(
+                    accelerations.map { it.x }.median(),
+                    accelerations.map { it.y }.median(),
+                    accelerations.map { it.z }.median()
                 )
-            }, 100).subscribe({
+            }, { angularVelocities ->
+                AngularVelocity(
+                    angularVelocities.map { it.x }.median(),
+                    angularVelocities.map { it.y }.median(),
+                    angularVelocities.map { it.z }.median()
+                )
+            }, 20).subscribe({
                 sensorValuesFile.writeValue(
                     listOf(
-                        it.gpsLocation?.time, it.acceleration.x,
+                        it.timestamp, it.acceleration.x,
                         it.acceleration.y, it.acceleration.z, it.angularVelocity.x,
                         it.angularVelocity.y, it.angularVelocity.z, it.gpsLocation?.latitude,
                         it.gpsLocation?.longitude, it.gpsLocation?.speed

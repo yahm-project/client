@@ -2,6 +2,7 @@ package it.unibo.yahm.client.activities
 
 import it.unibo.yahm.R
 import android.graphics.Point
+import android.location.Location
 import android.os.Bundle
 import android.os.Handler
 import android.os.SystemClock
@@ -12,9 +13,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import it.unibo.yahm.client.RoadIssue
+import it.unibo.yahm.client.sensors.*
 import it.unibo.yahm.client.utils.DrawableUtils
-import it.unibo.yahm.client.sensors.ReactiveSensor
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.atan2
@@ -37,9 +39,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var carMarker: Marker? = null
     private var drawedRoadSegmentStatus: List<Polyline> = Collections.emptyList()
     private var drawedRoadIssues: List<Marker> = Collections.emptyList()
-    private var reactiveSensors: ReactiveSensor? = null
-    private var currentCameraBearing =
-        BEARING
+    private var reactiveSensor: ReactiveSensor? = null
+    private var reactiveLocation: ReactiveLocation? = null
+    private var currentCameraBearing = BEARING
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,7 +52,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        reactiveSensors = ReactiveSensor(applicationContext)
+        reactiveSensor = ReactiveSensor(applicationContext)
+        reactiveLocation = ReactiveLocation(applicationContext)
     }
 
     /**
@@ -93,7 +96,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val markerIcon = DrawableUtils.getMarkerIconFromDrawable(circleDrawable!!)
 
         runOnUiThread {
-            drawedRoadIssues += mMap.addMarker(
+            drawedRoadIssues = drawedRoadIssues + mMap.addMarker(
                 MarkerOptions()
                     .position(LatLng(coordinate.first, coordinate.second))
                     .anchor(0.5f, 0.5f)
@@ -102,7 +105,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun updateCarLocation(newCoordinates: LatLng) {
+    private fun updateCarLocation(position: Location) {
         val handler = Handler()
         val start = SystemClock.uptimeMillis()
         val projection: Projection = mMap.projection
@@ -116,19 +119,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 val elapsed = SystemClock.uptimeMillis() - start
                 val t: Float = interpolator.getInterpolation(elapsed.toFloat() / duration)
 
-                if(t > 1.0 ) {
-                    updateCameraLocation(location = newCoordinates, bearing = currentCameraBearing)
-                    runOnUiThread { carMarker!!.position = LatLng(newCoordinates.latitude, newCoordinates.longitude) }
+                if (t > 1.0 ) {
+                    val latLng = LatLng(position.latitude, position.longitude)
+                    updateCameraLocation(location = latLng, bearing = currentCameraBearing)
+                    runOnUiThread { carMarker!!.position = latLng}
                 } else {
-                    val lng: Double = t * newCoordinates.longitude + (1 - t) * startLatLng.longitude
-                    val lat: Double = t * newCoordinates.latitude + (1 - t) * startLatLng.latitude
+                    val lng: Double = t * position.longitude + (1 - t) * startLatLng.longitude
+                    val lat: Double = t * position.latitude + (1 - t) * startLatLng.latitude
                     runOnUiThread { carMarker!!.position = LatLng(lat, lng) }
                     handler.postDelayed(this, 16)
                 }
             }
         }
         handler.post(runnableCode)
-
     }
 
     private fun updateCameraLocation(
@@ -142,7 +145,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             .zoom(zoom)
             .tilt(tilt)
             .bearing(bearing)
-            .build();
+            .build()
         currentCameraBearing = bearing
         runOnUiThread { mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraUpdate)) }
     }
@@ -217,22 +220,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun observeCarSensors() {
-        /*
-        val gps = reactiveSensors!!.observerFor(SensorType.GPS)
-        val compass = reactiveSensors!!.observerFor(SensorType.ROTATION_VECTOR)
-
-        gps.observeOn(AndroidSchedulers.mainThread())
-            .subscribe {
-                val coordinates = LatLng((it as GpsData).latitude, it.longitude)
-                Log.d("MapActivity", "GPS Update: $coordinates")
-                updateCarLocation(coordinates)
-            }
-        compass.observeOn(AndroidSchedulers.mainThread()).subscribe {
-            val orientation = (it as CompassData).orientation
-            //Log.d("MapActivity", "$orientation")
-            updateRotation(orientation);
+        reactiveLocation!!.observe().observeOn(AndroidSchedulers.mainThread())
+            .subscribe { updateCarLocation(it) }
+        reactiveSensor!!.observer(SensorType.ROTATION_VECTOR)
+            .observeOn(AndroidSchedulers.mainThread()).map(OrientationMapper()).subscribe {
+            updateRotation(it);
         }
-        */
 
         /*
         //TODO: remove the following, just for debug
@@ -262,7 +255,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 .icon(markerIcon)
         )
     }
-
 
     /* Get segment's bearing the user is navigating */
     private fun getBearingForSegment(begin: LatLng, end: LatLng): Float {

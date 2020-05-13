@@ -6,7 +6,7 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.functions.BiFunction
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.PublishSubject
-import java.util.*
+import it.unibo.yahm.client.utils.FunctionUtils.median
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
@@ -29,6 +29,7 @@ class SensorObservers(reactiveLocation: ReactiveLocation, reactiveSensor: Reacti
         val accelerationEvents = mutableListOf<SensorEvent>()
         val gyroscopeEvents = mutableListOf<SensorEvent>()
 
+        // aggregate by stretches length
         gpsObserver.subscribeOn(thread).subscribe {
             if (startLocation == null) {
                 startLocation = it
@@ -78,7 +79,8 @@ class SensorObservers(reactiveLocation: ReactiveLocation, reactiveSensor: Reacti
     }
 
     fun observeForSensorValues(
-        aggregateFunction: (List<Acceleration>, List<AngularVelocity>, GpsLocation?) -> SensorValues,
+        accelerationAggregateFunction: (List<Acceleration>) -> Acceleration,
+        angularVelocityAggregateFunction: (List<AngularVelocity>) -> AngularVelocity,
         timeSpan: Long = 20
     ): Observable<SensorValues> {
         val thread = Schedulers.newThread()
@@ -95,10 +97,12 @@ class SensorObservers(reactiveLocation: ReactiveLocation, reactiveSensor: Reacti
             .map { pairs ->
                 val accelerations = pairs.map { Acceleration.fromSensorEvent(it.first) }
                 val angularVelocities = pairs.map { AngularVelocity.fromSensorEvent(it.second) }
-                val averageTimestamp = ((pairs.map { it.first.timestamp }.average() +
-                        pairs.map { it.second.timestamp }.average()) / 2).toLong()
+                val averageTimestamp = ((pairs.map { it.first.timestamp }.median() +
+                        pairs.map { it.second.timestamp }.median()) / 2)
                 val location = timedLocationSubscriber.locationAt(averageTimestamp)
-                aggregateFunction(accelerations, angularVelocities,
+                SensorValues(accelerationAggregateFunction(accelerations),
+                    angularVelocityAggregateFunction(angularVelocities),
+                    averageTimestamp,
                     if (location != null) GpsLocation.fromLocation(location) else null)
             }.subscribeOn(thread)
     }

@@ -1,6 +1,6 @@
 package it.unibo.yahm.client
 
-import io.reactivex.Observable
+import io.reactivex.rxjava3.core.Observable
 import it.unibo.yahm.client.entities.Evaluations
 import retrofit2.Call
 import retrofit2.http.Body

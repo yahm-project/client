@@ -20,7 +20,8 @@ class ScrollablePlot:
         self.vertical_extra_space = vertical_extra_space
         self.title = title
         self.events_colors = {
-            "Buca": "red"
+            "Buca": "red",
+            "Giunto": "blue"
         }
 
     def set_timestamps(self, timestamps, relative=True):
@@ -87,22 +88,23 @@ def main():
         values_filename = sys.argv[1]
         events_filename = sys.argv[2]
     else:
-        values_filename = "values.csv"
-        events_filename = "events.csv"
+        values_filename = "sensor_values2.csv"
+        events_filename = "obstacles.csv"
 
-    values = read_csv(values_filename) # Timestamp,xAcc,yAcc,zAcc,xAngVel,yAngVel,zAngVel,lat,lon,speed
+    values = read_csv(values_filename) # timestamp,x_acc,y_acc,z_acc,x_ang_vel,y_ang_vel,z_ang_vel,latitude,longitude,speed
     clicks = read_csv(events_filename)
-    timestamps = values.loc[:, "Timestamp"]
+
+    timestamps = values.loc[:, "timestamp"]
 
     scrollable_plot = ScrollablePlot(title="Spothole data")
     scrollable_plot.set_timestamps(timestamps)    
-    scrollable_plot.add_axe(values.loc[:, "xAcc"], "red", "x_acc")
-    scrollable_plot.add_axe(values.loc[:, "yAcc"], "green", "y_acc")
-    scrollable_plot.add_axe(values.loc[:, "zAcc"], "blue", "z_acc")
-    scrollable_plot.add_axe(values.loc[:, "xAngVel"], "red", "x_giro")
-    scrollable_plot.add_axe(values.loc[:, "yAngVel"], "green", "y_giro")
-    scrollable_plot.add_axe(values.loc[:, "zAngVel"], "blue", "z_giro")
-    scrollable_plot.add_events(clicks.loc[:, "Timestamp"], clicks.loc[:, "obj"])
+    scrollable_plot.add_axe(values.loc[:, "x_acc"], "red", "x_acc")
+    scrollable_plot.add_axe(values.loc[:, "y_acc"], "green", "y_acc")
+    scrollable_plot.add_axe(values.loc[:, "z_acc"], "blue", "z_acc")
+    scrollable_plot.add_axe(values.loc[:, "x_ang_vel"], "red", "x_giro")
+    scrollable_plot.add_axe(values.loc[:, "y_ang_vel"], "green", "y_giro")
+    scrollable_plot.add_axe(values.loc[:, "z_ang_vel"], "blue", "z_giro")
+    scrollable_plot.add_events(clicks.loc[:, "timestamp"], clicks.loc[:, "type"])
 
     scrollable_plot.show()
 
