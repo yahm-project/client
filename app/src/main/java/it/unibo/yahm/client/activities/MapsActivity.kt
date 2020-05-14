@@ -13,15 +13,21 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
+import hu.akarnokd.rxjava3.retrofit.RxJava3CallAdapterFactory
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import it.unibo.yahm.client.RoadIssue
+import io.reactivex.rxjava3.core.Scheduler
+import io.reactivex.rxjava3.schedulers.Schedulers
+import it.unibo.yahm.client.SpotholeService
+import it.unibo.yahm.client.entities.Coordinate
+import it.unibo.yahm.client.entities.Leg
+import it.unibo.yahm.client.entities.ObstacleType
+import it.unibo.yahm.client.entities.Quality
 import it.unibo.yahm.client.sensors.*
 import it.unibo.yahm.client.utils.DrawableUtils
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.util.*
-import kotlin.math.abs
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.sin
+import kotlin.math.*
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -37,12 +43,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
     private var carMarker: Marker? = null
-    private var drawedRoadSegmentStatus: List<Polyline> = Collections.emptyList()
-    private var drawedRoadIssues: List<Marker> = Collections.emptyList()
+    private var drawedLegs: Map<Leg, Polyline> = emptyMap()
+    private var drawedObstacles: Map<Coordinate, List<Marker>> = Collections.emptyMap()
     private var reactiveSensor: ReactiveSensor? = null
     private var reactiveLocation: ReactiveLocation? = null
     private var currentCameraBearing = BEARING
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,6 +59,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         reactiveSensor = ReactiveSensor(applicationContext)
         reactiveLocation = ReactiveLocation(applicationContext)
+
+
+
     }
 
     /**
@@ -72,36 +80,50 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             BEARING
         )
         observeCarSensors()
+
+        val baseUrl = applicationContext.resources.getString(R.string.spothole_service_development_baseurl)
+        val retrofit = Retrofit.Builder().baseUrl(baseUrl)
+            .addConverterFactory(GsonConverterFactory.create())
+            .addCallAdapterFactory(RxJava3CallAdapterFactory.create())
+            .build()
+        val service = retrofit.create(SpotholeService::class.java)
+
+        service.loadEvaluationsFromUserPerspective(43.9714437, 12.6030226, 10000.0).subscribeOn(Schedulers.single()).subscribe ({
+            it.forEach { leg -> drawLeg(leg)}
+        },{ Log.e("testError", it.toString())})
     }
 
-    fun drawRoadSegmentStatus(coordinates: List<Pair<Double, Double>>, argbColor: Int) {
+
+    fun drawLeg(leg: Leg) {
         runOnUiThread {
             val polyline = mMap.addPolyline(
-                PolylineOptions().addAll(coordinates.map { LatLng(it.first, it.second) })
-                    .color(argbColor)
+                PolylineOptions().addAll(listOf(leg.from.coordinates.toLatLng(), leg.to.coordinates.toLatLng()))
+                    .color(Quality.fromValue(leg.quality.roundToInt())!!.color.toArgb())
             )
-            drawedRoadSegmentStatus += polyline
+            drawedLegs += leg to polyline
         }
+        leg.obstacles.forEach{(obsType, obsCoordinateList) -> obsCoordinateList.forEach{coordinate -> drawObstacle(obsType, coordinate)}}
     }
 
-    fun drawRoadIssueOnPoint(coordinate: Pair<Double, Double>, issue: RoadIssue) {
-        val drawable = when (issue) {
-            RoadIssue.POT_HOLE -> R.drawable.ic_up_arrow_circle
-            RoadIssue.ROAD_DRAIN -> R.drawable.ic_up_arrow_circle
-            RoadIssue.SPEED_BUMP -> R.drawable.ic_up_arrow_circle
-            RoadIssue.ROAD_JOINT -> R.drawable.ic_up_arrow_circle
+    fun drawObstacle(obstacleType: ObstacleType, coordinate: Coordinate) {
+        val drawable = when (obstacleType) {
+            ObstacleType.POTHOLE -> R.drawable.ic_up_arrow_circle
+            ObstacleType.MANHOLE -> R.drawable.ic_up_arrow_circle
+            ObstacleType.SPEED_BUMP -> R.drawable.ic_up_arrow_circle
+            ObstacleType.JOINT -> R.drawable.ic_up_arrow_circle
 
         }
         val circleDrawable = ContextCompat.getDrawable(applicationContext, drawable)
         val markerIcon = DrawableUtils.getMarkerIconFromDrawable(circleDrawable!!)
 
         runOnUiThread {
-            drawedRoadIssues = drawedRoadIssues + mMap.addMarker(
+             val obstacleMarker = mMap.addMarker(
                 MarkerOptions()
-                    .position(LatLng(coordinate.first, coordinate.second))
+                    .position(coordinate.toLatLng())
                     .anchor(0.5f, 0.5f)
                     .icon(markerIcon)
             )
+            drawedObstacles += coordinate to listOf(obstacleMarker) + (drawedObstacles.getOrElse(coordinate, { -> listOf<Marker>()}))
         }
     }
 
@@ -220,12 +242,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun observeCarSensors() {
+        /*
         reactiveLocation!!.observe().observeOn(AndroidSchedulers.mainThread())
             .subscribe { updateCarLocation(it) }
         reactiveSensor!!.observer(SensorType.ROTATION_VECTOR)
             .observeOn(AndroidSchedulers.mainThread()).map(OrientationMapper()).subscribe {
             updateRotation(it);
         }
+        */
+
 
         /*
         //TODO: remove the following, just for debug

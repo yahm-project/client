@@ -1,5 +1,8 @@
 package it.unibo.yahm.client.entities
 
-enum class ObstacleType(val type: Int) {
-    POTHOLE(0)
+enum class ObstacleType {
+    POTHOLE,
+    SPEED_BUMP,
+    MANHOLE,
+    JOINT
 }
