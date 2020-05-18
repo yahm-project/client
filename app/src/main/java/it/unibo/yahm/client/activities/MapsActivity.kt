@@ -1,6 +1,6 @@
 package it.unibo.yahm.client.activities
 
-import it.unibo.yahm.R
+import android.graphics.Paint
 import android.graphics.Point
 import android.location.Location
 import android.os.Bundle
@@ -15,20 +15,23 @@ import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
 import hu.akarnokd.rxjava3.retrofit.RxJava3CallAdapterFactory
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.core.Scheduler
 import io.reactivex.rxjava3.schedulers.Schedulers
 import it.unibo.yahm.client.SpotholeService
 import it.unibo.yahm.client.entities.Coordinate
 import it.unibo.yahm.client.entities.Leg
 import it.unibo.yahm.client.entities.ObstacleType
 import it.unibo.yahm.client.entities.Quality
-import it.unibo.yahm.client.sensors.*
+import it.unibo.yahm.client.sensors.ReactiveLocation
+import it.unibo.yahm.client.sensors.ReactiveSensor
+import it.unibo.yahm.client.utils.CustomTileProvider
 import it.unibo.yahm.client.utils.DrawableUtils
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.*
 import kotlin.math.*
-
+import it.unibo.yahm.R
+import it.unibo.yahm.client.sensors.OrientationMapper
+import it.unibo.yahm.client.sensors.SensorType
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -75,6 +78,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
      */
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+        mMap.mapType = GoogleMap.MAP_TYPE_NONE
+        val tileProvider: TileProvider = CustomTileProvider()
+        val tileOverlay: TileOverlay = mMap.addTileOverlay(TileOverlayOptions().tileProvider(tileProvider).zIndex(-99f).fadeIn(true))
+
+
         carMarker = addCarMarker(
             DEFAULT_LOCATION,
             BEARING
@@ -94,18 +102,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
 
-    fun drawLeg(leg: Leg) {
+    private fun drawLeg(leg: Leg) {
         runOnUiThread {
             val polyline = mMap.addPolyline(
                 PolylineOptions().addAll(listOf(leg.from.coordinates.toLatLng(), leg.to.coordinates.toLatLng()))
                     .color(Quality.fromValue(leg.quality.roundToInt())!!.color.toArgb())
+                    .startCap(RoundCap()).endCap(RoundCap())
             )
             drawedLegs += leg to polyline
         }
         leg.obstacles.forEach{(obsType, obsCoordinateList) -> obsCoordinateList.forEach{coordinate -> drawObstacle(obsType, coordinate)}}
     }
 
-    fun drawObstacle(obstacleType: ObstacleType, coordinate: Coordinate) {
+    private fun drawObstacle(obstacleType: ObstacleType, coordinate: Coordinate) {
         val drawable = when (obstacleType) {
             ObstacleType.POTHOLE -> R.drawable.ic_up_arrow_circle
             ObstacleType.MANHOLE -> R.drawable.ic_up_arrow_circle
@@ -153,6 +162,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 }
             }
         }
+
         handler.post(runnableCode)
     }
 
@@ -242,14 +252,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun observeCarSensors() {
-        /*
+
         reactiveLocation!!.observe().observeOn(AndroidSchedulers.mainThread())
-            .subscribe { updateCarLocation(it) }
+            .subscribe { updateCarLocation(it)
+         }
         reactiveSensor!!.observer(SensorType.ROTATION_VECTOR)
             .observeOn(AndroidSchedulers.mainThread()).map(OrientationMapper()).subscribe {
             updateRotation(it);
         }
-        */
+
 
 
         /*
