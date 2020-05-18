@@ -1,6 +1,6 @@
 package it.unibo.yahm.client.activities
 
-import android.graphics.Paint
+import android.content.res.ColorStateList
 import android.graphics.Point
 import android.location.Location
 import android.os.Bundle
@@ -9,10 +9,13 @@ import android.os.SystemClock
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.animation.LinearInterpolator
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColor
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import hu.akarnokd.rxjava3.retrofit.RxJava3CallAdapterFactory
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.schedulers.Schedulers
@@ -32,6 +35,7 @@ import kotlin.math.*
 import it.unibo.yahm.R
 import it.unibo.yahm.client.sensors.OrientationMapper
 import it.unibo.yahm.client.sensors.SensorType
+import java.security.AccessController.getContext
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -51,20 +55,33 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var reactiveSensor: ReactiveSensor? = null
     private var reactiveLocation: ReactiveLocation? = null
     private var currentCameraBearing = BEARING
+    private var spotting = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        val mapFragment = supportFragmentManager
-            .findFragmentById(R.id.map) as SupportMapFragment
+        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
+        val fabSpot = findViewById<FloatingActionButton>(R.id.fab_spot)
+        fabSpot.setOnClickListener {
+            if(spotting) {
+                //stop async task
+                Toast.makeText(applicationContext, getString(R.string.road_scan_started), Toast.LENGTH_LONG).show()
+                fabSpot.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(applicationContext, R.color.primaryColor))
+                fabSpot.setImageDrawable(getDrawable(R.drawable.ic_time_to_leave_white_24dp));
+            } else {
+                //start async task
+
+                Toast.makeText(applicationContext, getString(R.string.road_scan_stopped), Toast.LENGTH_LONG).show()
+                fabSpot.backgroundTintList = ColorStateList.valueOf(getColor(R.color.secondaryColor))
+                fabSpot.setImageDrawable(getDrawable(R.drawable.ic_pan_tool_white_24dp));
+            }
+            spotting = !spotting
+        }
 
         reactiveSensor = ReactiveSensor(applicationContext)
         reactiveLocation = ReactiveLocation(applicationContext)
-
-
-
     }
 
     /**
@@ -208,8 +225,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     /*
-        La mappa deve adattare il proprio orientamento facendo in modo che il marker sia sempre rivolto verso l'alto,
-        questo richiede che la mappa e la camera ruotino in sincronia non appena la rotazione dell'auto superi un certo delta rispetto ad essi.
+        Camera must adapt its orientation so that the marker is always facing upwards,
+        this requires that the camera continuously change its orientation as soon as the delta
+        between the two angles is above a certain threshold.
     */
     private var isRotating = false
     private var currentCarTargetRotation =
