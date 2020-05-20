@@ -12,7 +12,7 @@ import kotlin.math.abs
 
 class SensorCombiners(reactiveLocation: ReactiveLocation, reactiveSensor: ReactiveSensor) {
 
-    private val accelerometerObserver = reactiveSensor.observer(SensorType.ACCELEROMETER)
+    private val accelerometerObserver = reactiveSensor.observer(SensorType.LINEAR_ACCELERATION)
     private val gyroscopeObserver = reactiveSensor.observer(SensorType.GYROSCOPE)
     private val gpsObserver = reactiveLocation.observe()
 

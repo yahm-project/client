@@ -15,6 +15,7 @@ import it.unibo.yahm.client.sensors.SensorCombiners
 import it.unibo.yahm.client.sensors.SensorType
 import it.unibo.yahm.client.utils.CsvFile
 import it.unibo.yahm.client.utils.FunctionUtils.median
+import it.unibo.yahm.client.utils.FunctionUtils.stdDeviation
 import kotlin.system.exitProcess
 
 
@@ -49,8 +50,18 @@ class TrainingActivity : AppCompatActivity() {
 
         val sensorValuesFile = CsvFile(
             "sensor_values", listOf(
-                "timestamp", "x_acc", "y_acc",
-                "z_acc", "x_ang_vel", "y_ang_vel", "z_ang_vel", "latitude", "longitude", "speed"
+                "timestamp",
+                "x_min_acc", "y_min_acc", "z_min_acc",
+                "x_max_acc", "y_max_acc", "z_max_acc",
+                "x_avg_acc", "y_avg_acc", "z_avg_acc",
+                "x_med_acc", "y_med_acc", "z_med_acc",
+                "x_sdv_acc", "y_sdv_acc", "z_sdv_acc",
+                "x_min_ang_vel", "y_min_ang_vel", "z_min_ang_vel",
+                "x_max_ang_vel", "y_max_ang_vel", "z_max_ang_vel",
+                "x_avg_ang_vel", "y_avg_ang_vel", "z_avg_ang_vel",
+                "x_med_ang_vel", "y_med_ang_vel", "z_med_ang_vel",
+                "x_sdv_ang_vel", "y_sdv_ang_vel", "z_sdv_ang_vel",
+                "latitude", "longitude", "speed"
             ),
             applicationContext
         )
@@ -65,17 +76,40 @@ class TrainingActivity : AppCompatActivity() {
             Log.i("TrainingActivity", "Saving to ${sensorValuesFile.fileName}")
             Log.i("TrainingActivity", "Saving to ${obstaclesFile.fileName}")
 
-
             sensorObservers.combineByTime().subscribe({ cv ->
                 sensorValuesFile.writeValue(
                     listOf(
                         cv.timestamp,
+                        cv.accelerationValues.map { it.x }.min(),
+                        cv.accelerationValues.map { it.y }.min(),
+                        cv.accelerationValues.map { it.z }.min(),
+                        cv.accelerationValues.map { it.x }.max(),
+                        cv.accelerationValues.map { it.y }.max(),
+                        cv.accelerationValues.map { it.z }.max(),
+                        cv.accelerationValues.map { it.x }.average(),
+                        cv.accelerationValues.map { it.y }.average(),
+                        cv.accelerationValues.map { it.z }.average(),
                         cv.accelerationValues.map { it.x }.median(),
                         cv.accelerationValues.map { it.y }.median(),
                         cv.accelerationValues.map { it.z }.median(),
+                        cv.accelerationValues.map { it.x }.stdDeviation(),
+                        cv.accelerationValues.map { it.y }.stdDeviation(),
+                        cv.accelerationValues.map { it.z }.stdDeviation(),
+                        cv.gyroscopeValues.map { it.x }.min(),
+                        cv.gyroscopeValues.map { it.y }.min(),
+                        cv.gyroscopeValues.map { it.z }.min(),
+                        cv.gyroscopeValues.map { it.x }.max(),
+                        cv.gyroscopeValues.map { it.y }.max(),
+                        cv.gyroscopeValues.map { it.z }.max(),
+                        cv.gyroscopeValues.map { it.x }.average(),
+                        cv.gyroscopeValues.map { it.y }.average(),
+                        cv.gyroscopeValues.map { it.z }.average(),
                         cv.gyroscopeValues.map { it.x }.median(),
                         cv.gyroscopeValues.map { it.y }.median(),
                         cv.gyroscopeValues.map { it.z }.median(),
+                        cv.gyroscopeValues.map { it.x }.stdDeviation(),
+                        cv.gyroscopeValues.map { it.y }.stdDeviation(),
+                        cv.gyroscopeValues.map { it.z }.stdDeviation(),
                         cv.location?.latitude,
                         cv.location?.longitude,
                         cv.location?.speed
@@ -108,8 +142,8 @@ class TrainingActivity : AppCompatActivity() {
             startButton.isEnabled = true
 
             reactiveLocation.dispose()
-            reactiveSensor.dispose(SensorType.ACCELEROMETER)
-            reactiveSensor.dispose(SensorType.GYROSCOPE)
+            // reactiveSensor.dispose(SensorType.LINEAR_ACCELERATION)
+            // reactiveSensor.dispose(SensorType.GYROSCOPE)
             sensorValuesFile.close()
             obstaclesFile.close()
         }
