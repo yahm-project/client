@@ -1,58 +1,65 @@
 package it.unibo.yahm.client.utils
 
+import android.location.Location
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.VisibleRegion
 import java.util.*
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.math.sqrt
+import kotlin.math.*
 
-const val EARTH_RADIUS = 3958.75
-const val METER_CONVERSION = 1609
 class MapUtils {
-
     companion object {
-        fun getSurroundingMarkers(
-            markers: List<Marker>?,
-            origin: LatLng, maxDistanceMeters: Int,
-            radius: Int
-        ): List<Marker> {
-            val surroundingMarkers = Collections.emptyList<Marker>()
-            if (markers == null) return surroundingMarkers
-            for (marker in markers) {
-                val dist = distBetween(origin, marker.position).toDouble()
-                if (dist < radius) {
-                    surroundingMarkers.add(marker)
-                }
-            }
-            return surroundingMarkers
-        }
-
-        private fun distBetween(pos1: LatLng, pos2: LatLng): Float {
-            return distBetween(
-                pos1.latitude, pos1.longitude, pos2.latitude,
-                pos2.longitude
-            )
-        }
+        private const val EARTH_RADIUS = 3958.75
+        private const val METER_CONVERSION = 1609
 
         /** distance in meters  */
-        private fun distBetween(
-            lat1: Double,
-            lng1: Double,
-            lat2: Double,
-            lng2: Double
+        fun distBetween(
+            pointA: LatLng,
+            pointB: LatLng
         ): Float {
-            val dLat = Math.toRadians(lat2 - lat1)
-            val dLng = Math.toRadians(lng2 - lng1)
+            val dLat = Math.toRadians(pointB.latitude - pointA.latitude)
+            val dLng = Math.toRadians(pointB.longitude - pointA.longitude)
             val a = (sin(dLat / 2) * sin(dLat / 2)
-                    + (cos(Math.toRadians(lat1))
-                    * cos(Math.toRadians(lat2)) * sin(dLng / 2)
+                    + (cos(Math.toRadians(pointA.latitude))
+                    * cos(Math.toRadians(pointB.latitude)) * sin(dLng / 2)
                     * sin(dLng / 2)))
             val c = 2 * atan2(sqrt(a), sqrt(1 - a))
             val dist = EARTH_RADIUS * c
 
             return (dist * METER_CONVERSION).toFloat()
+        }
+
+        /* Get segment's bearing the user is navigating */
+        fun getBearingForSegment(begin: LatLng, end: LatLng): Float {
+            val dLon = end.longitude - begin.longitude
+            val x = sin(Math.toRadians(dLon)) * cos(Math.toRadians(end.latitude))
+            val y = (cos(Math.toRadians(begin.latitude)) * sin(Math.toRadians(end.latitude))
+                    - sin(Math.toRadians(begin.latitude)) * cos(Math.toRadians(end.latitude))
+                    * cos(Math.toRadians(dLon)))
+            val bearing = Math.toDegrees(atan2(x, y))
+            return bearing.toFloat()
+        }
+
+
+        fun getVisibleRadius(visibleRegion: VisibleRegion): Float {
+            val diagonalDistance = FloatArray(1)
+            val farLeft = visibleRegion.farLeft;
+            val nearRight = visibleRegion.nearRight;
+
+            Location.distanceBetween(
+                farLeft.latitude,
+                farLeft.longitude,
+                nearRight.latitude,
+                nearRight.longitude,
+                diagonalDistance
+            )
+
+            return diagonalDistance[0] / 2;
+        }
+
+        fun rotationGap(first: Float, second: Float): Float {
+            val rotationDelta: Float = (abs(first - second) % 360.0f)
+            return if (rotationDelta > 180.0f) (360.0f - rotationDelta) else rotationDelta
         }
     }
 }
