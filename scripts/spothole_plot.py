@@ -138,12 +138,16 @@ class ScrollablePlot:
 
 
 def main():
-    if len(sys.argv) == 3:
+    if len(sys.argv) >= 3:
         values_filename = sys.argv[1]
         events_filename = sys.argv[2]
+        if len(sys.argv) == 4:
+            metric = sys.argv[3]
+        else:
+            metric = "avg"
     else:
-        values_filename = "sensors.csv"
-        events_filename = "obstacles.csv"
+        print(f"Usage: {sys.argv[0]} sensor_values.csv obstacles.csv [metric]")
+        exit(1)
 
     values = read_csv(values_filename) # timestamp,x_acc,y_acc,z_acc,x_ang_vel,y_ang_vel,z_ang_vel,latitude,longitude,speed
     clicks = read_csv(events_filename)
@@ -159,12 +163,12 @@ def main():
 
     scrollable_plot = ScrollablePlot(title="Spothole data", on_events_changed=write_obstacles)
     scrollable_plot.set_timestamps(timestamps)
-    scrollable_plot.add_axe(values.loc[:, "x_acc"], "red", "x_acc")
-    scrollable_plot.add_axe(values.loc[:, "y_acc"], "green", "y_acc")
-    scrollable_plot.add_axe(values.loc[:, "z_acc"], "blue", "z_acc")
-    scrollable_plot.add_axe(values.loc[:, "x_ang_vel"], "red", "x_giro")
-    scrollable_plot.add_axe(values.loc[:, "y_ang_vel"], "green", "y_giro")
-    scrollable_plot.add_axe(values.loc[:, "z_ang_vel"], "blue", "z_giro")
+    scrollable_plot.add_axe(values.loc[:, f"x_{metric}_acc"], "red", "x_acc")
+    scrollable_plot.add_axe(values.loc[:, f"y_{metric}_acc"], "green", "y_acc")
+    scrollable_plot.add_axe(values.loc[:, f"z_{metric}_acc"], "blue", "z_acc")
+    scrollable_plot.add_axe(values.loc[:, f"x_{metric}_ang_vel"], "red", "x_giro")
+    scrollable_plot.add_axe(values.loc[:, f"y_{metric}_ang_vel"], "green", "y_giro")
+    scrollable_plot.add_axe(values.loc[:, f"z_{metric}_ang_vel"], "blue", "z_giro")
     scrollable_plot.add_events(clicks.loc[:, "timestamp"], clicks.loc[:, "type"])
 
     scrollable_plot.show()
