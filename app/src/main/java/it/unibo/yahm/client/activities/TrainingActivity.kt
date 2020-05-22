@@ -100,7 +100,7 @@ class TrainingActivity : AppCompatActivity() {
         val color = ColorTemplate.VORDIPLOM_COLORS[count % ColorTemplate.VORDIPLOM_COLORS.size];
         var set = LineDataSet(null, name);
         set.lineWidth = 2f;
-        set.circleRadius = 1f;
+        set.circleRadius = 2f;
         set.color = color;
         set.setCircleColor(color);
         set.axisDependency = AxisDependency.LEFT;

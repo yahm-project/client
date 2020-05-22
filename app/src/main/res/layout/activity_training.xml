@@ -9,14 +9,7 @@
     android:orientation="vertical"
     tools:context=".client.activities.TrainingActivity">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/my_toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/primaryColor"
-        android:elevation="4dp"
-        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
+    <include layout="@layout/toolbar"/>
 
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/sensorChart"
@@ -43,25 +36,25 @@
             <Button
                 android:id="@+id/spotHole"
                 android:layout_width="match_parent"
-                android:layout_height="95dp"
+                android:layout_height="80dp"
                 android:text="@string/spotHole" />
 
             <Button
                 android:id="@+id/spotBack"
                 android:layout_width="match_parent"
-                android:layout_height="95dp"
+                android:layout_height="80dp"
                 android:text="@string/spotBack" />
 
             <Button
                 android:id="@+id/spotRoadJoint"
                 android:layout_width="match_parent"
-                android:layout_height="95dp"
+                android:layout_height="80dp"
                 android:text="@string/roadJoint" />
 
             <Button
                 android:id="@+id/spotManHole"
                 android:layout_width="match_parent"
-                android:layout_height="95dp"
+                android:layout_height="80dp"
                 android:text="@string/manHole" />
 
         </LinearLayout>

@@ -2,7 +2,6 @@ package it.unibo.yahm.client.activities
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import it.unibo.yahm.R
@@ -13,6 +12,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        setSupportActionBar(findViewById(R.id.my_toolbar))
 
         val showMapButton = findViewById<Button>(R.id.showMap)
         showMapButton.setOnClickListener {

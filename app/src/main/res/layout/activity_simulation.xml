@@ -1,62 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <Button
-        android:id="@+id/btnStartSavingStretches"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="8dp"
-        android:text="start_saving_stretches"
-        android:textSize="10sp"
-        app:layout_constraintEnd_toStartOf="@+id/btnStopSavingStretches"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/btnStopSavingStretches"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:enabled="false"
-        android:text="stop_saving_stretches"
-        android:textSize="10sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/btnStartSavingStretches"
-        app:layout_constraintTop_toTopOf="parent" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-    <Button
-        android:id="@+id/btnStartSendingStretches"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="16dp"
-        android:text="start_sending_stretches"
-        android:textSize="10sp"
-        app:layout_constraintEnd_toStartOf="@+id/btnStopSendingStretches"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnStartSavingStretches" />
+        <include layout="@layout/toolbar"/>
 
-    <Button
-        android:id="@+id/btnStopSendingStretches"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="16dp"
-        android:enabled="false"
-        android:text="stop_sending_stretches"
-        android:textSize="10sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/btnStartSendingStretches"
-        app:layout_constraintTop_toBottomOf="@+id/btnStopSavingStretches" />
+        <Button
+            android:id="@+id/btnStartSavingStretches"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="start_saving_stretches"
+            android:textSize="10sp" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <Button
+            android:id="@+id/btnStopSavingStretches"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:enabled="false"
+            android:text="stop_saving_stretches"
+            android:textSize="10sp" />
+
+        <Button
+            android:id="@+id/btnStartSendingStretches"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="start_sending_stretches"
+            android:textSize="10sp" />
+
+        <Button
+            android:id="@+id/btnStopSendingStretches"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:enabled="false"
+            android:text="stop_sending_stretches"
+            android:textSize="10sp" />
+
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
