@@ -1,4 +1,4 @@
-package it.unibo.yahm.client.training
+package it.unibo.yahm.client.classifiers
 
 import io.reactivex.rxjava3.functions.Function
 import it.unibo.yahm.client.entities.Coordinate

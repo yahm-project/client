@@ -16,7 +16,7 @@ import it.unibo.yahm.client.sensors.ReactiveLocation
 import it.unibo.yahm.client.sensors.ReactiveSensor
 import it.unibo.yahm.client.sensors.SensorCombiners
 import it.unibo.yahm.client.sensors.SensorType
-import it.unibo.yahm.client.training.FakeQualityClassifier
+import it.unibo.yahm.client.classifiers.FakeQualityClassifier
 import it.unibo.yahm.client.utils.CsvFile
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
