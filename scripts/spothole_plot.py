@@ -5,10 +5,21 @@ from matplotlib import pyplot as plt
 from matplotlib.widgets import Slider
 import matplotlib.patches as mpatches
 import sys
+from scipy import signal
 
 
 def read_csv(file_name):
     return pd.read_csv(file_name, sep=",", header=0)
+
+def butter_lowpass(cutoff, nyq_freq, order=4):
+    normal_cutoff = float(cutoff) / nyq_freq
+    b, a = signal.butter(order, normal_cutoff, btype='lowpass')
+    return b, a
+
+def butter_lowpass_filter(data, cutoff_freq, nyq_freq, order=4):
+    b, a = butter_lowpass(cutoff_freq, nyq_freq, order=order)
+    y = signal.filtfilt(b, a, data)
+    return y
 
 class ScrollablePlot:
     def __init__(self, title, window_elements=250, vertical_extra_space=0.05, on_events_changed=None):
@@ -141,12 +152,13 @@ def main():
     if len(sys.argv) >= 3:
         values_filename = sys.argv[1]
         events_filename = sys.argv[2]
-        if len(sys.argv) == 4:
-            metric = sys.argv[3]
+
+        if len(sys.argv) >= 4:
+            cutoff_frequency = float(sys.argv[4])
         else:
-            metric = "avg"
+            cutoff_frequency = None
     else:
-        print(f"Usage: {sys.argv[0]} sensor_values.csv obstacles.csv [metric]")
+        print(f"Usage: {sys.argv[0]} sensor_values.csv obstacles.csv [cutoff_frequency]")
         exit(1)
 
     values = read_csv(values_filename) # timestamp,x_acc,y_acc,z_acc,x_ang_vel,y_ang_vel,z_ang_vel,latitude,longitude,speed
@@ -160,15 +172,22 @@ def main():
             for event_timestamp, event_type in events.items():
                 f.write(f"{event_timestamp},{event_type}\n")
 
+    sample_rate = 50  # 50 Hz resolution
+
+    def apply_filter(column):
+        data = values.loc[:, column]
+        if cutoff_frequency:
+            data = butter_lowpass_filter(data, cutoff_frequency, sample_rate/2)
+        return data
 
     scrollable_plot = ScrollablePlot(title="Spothole data", on_events_changed=write_obstacles)
     scrollable_plot.set_timestamps(timestamps)
-    scrollable_plot.add_axe(values.loc[:, f"x_{metric}_acc"], "red", "x_acc")
-    scrollable_plot.add_axe(values.loc[:, f"y_{metric}_acc"], "green", "y_acc")
-    scrollable_plot.add_axe(values.loc[:, f"z_{metric}_acc"], "blue", "z_acc")
-    scrollable_plot.add_axe(values.loc[:, f"x_{metric}_ang_vel"], "red", "x_giro")
-    scrollable_plot.add_axe(values.loc[:, f"y_{metric}_ang_vel"], "green", "y_giro")
-    scrollable_plot.add_axe(values.loc[:, f"z_{metric}_ang_vel"], "blue", "z_giro")
+    scrollable_plot.add_axe(apply_filter(f"x_acc"), "red", "x_acc")
+    scrollable_plot.add_axe(apply_filter(f"y_acc"), "green", "y_acc")
+    scrollable_plot.add_axe(apply_filter(f"z_acc"), "blue", "z_acc")
+    scrollable_plot.add_axe(apply_filter(f"x_ang_vel"), "red", "x_giro")
+    scrollable_plot.add_axe(apply_filter(f"y_ang_vel"), "green", "y_giro")
+    scrollable_plot.add_axe(apply_filter(f"z_ang_vel"), "blue", "z_giro")
     scrollable_plot.add_events(clicks.loc[:, "timestamp"], clicks.loc[:, "type"])
 
     scrollable_plot.show()
