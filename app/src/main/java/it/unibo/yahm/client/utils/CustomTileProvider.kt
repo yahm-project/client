@@ -28,7 +28,7 @@ class CustomTileProvider(val width:Int = 512, val height: Int = 512) :
 
     companion object {
         private const val MAPBOX_TOKEN = "pk.eyJ1IjoiZ2lhY29tb3RvbnRpbmkiLCJhIjoiY2s5Y3h0d2hxMDNjYjNtcGxmYTA3dnYzMSJ9.EoujETnFYtRxAox-ne97mQ"
-        private const val MAP_URL= "https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/%d/%d/%d/%d?access_token=" + MAPBOX_TOKEN
+        private const val MAP_URL= "https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/%d/%d/%d/%d?access_token=$MAPBOX_TOKEN"
     }
 }
 
@@ -54,10 +54,9 @@ class CanvasTileProvider(private val mTileProvider: TileProvider) : TileProvider
 
     var paint = Paint()
     private fun onDraw(canvas: Canvas, zoom: Int, x: Int, y: Int): Boolean {
-        var x = x
-        var y = y
-        x = x * 2
-        y = y * 2
+        var x = x * 2
+        var y = y * 2
+
         val leftTop = mTileProvider.getTile(x, y, zoom + 1)
         val leftBottom =
             mTileProvider.getTile(x, y + 1, zoom + 1)
@@ -93,7 +92,7 @@ class CanvasTileProvider(private val mTileProvider: TileProvider) : TileProvider
     }
 
     private val newBitmap: Bitmap
-        private get() {
+        get() {
             val image = Bitmap.createBitmap(
                 TILE_SIZE, TILE_SIZE,
                 Bitmap.Config.ARGB_8888

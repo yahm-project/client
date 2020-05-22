@@ -42,7 +42,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         private const val ZOOM: Float = 17f
         private const val TILT: Float = 45f
         private const val BEARING: Float = 0f
-        private const val MAX_RADIUS_METERS = 2000 //won't ask for disease further away than that
+        private const val MAX_RADIUS_METERS = 2000f //won't ask for disease further away than that
+        private const val DEFAULT_RADIUS_METERS = MAX_RADIUS_METERS / 10
         private const val BUFFER_SIZE = 20
     }
 
@@ -54,7 +55,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var reactiveLocation: ReactiveLocation
     private lateinit var sensorCombiners: SensorCombiners
     private var currentCameraBearing = BEARING
-    private var spotFAB: FloatingActionButton? = null
+    private lateinit var spotFAB: FloatingActionButton
     private var spotting = false
     private var backendService: SpotholeService? = null
     private lateinit var lastPositionFetched: LatLng
@@ -65,9 +66,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         checkPermissions()
         initServices()
         (supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).getMapAsync(this)
-
-        spotFAB = findViewById<FloatingActionButton>(R.id.fab_spot)
-        spotFAB?.setOnClickListener {
+        spotFAB = findViewById(R.id.fab_spot)
+        spotFAB.isEnabled = false
+        spotFAB.setOnClickListener {
             toggleSpotService()
         }
     }
@@ -103,25 +104,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun toggleSpotService() {
         if (spotting) {
             Toast.makeText(
-                applicationContext,
-                getString(R.string.road_scan_stopped),
-                Toast.LENGTH_SHORT
+                applicationContext, getString(R.string.road_scan_stopped), Toast.LENGTH_SHORT
             ).show()
-            spotFAB?.backgroundTintList = ColorStateList.valueOf(
-                ContextCompat.getColor(
-                    applicationContext,
-                    R.color.primaryColor
-                )
+            spotFAB.backgroundTintList = ColorStateList.valueOf(
+                ContextCompat.getColor(applicationContext, R.color.primaryColor)
             )
-            spotFAB?.setImageDrawable(getDrawable(R.drawable.ic_near_me_white));
+            spotFAB.setImageDrawable(getDrawable(R.drawable.ic_near_me_white));
         } else {
             Toast.makeText(
-                applicationContext,
-                getString(R.string.road_scan_started),
-                Toast.LENGTH_SHORT
+                applicationContext, getString(R.string.road_scan_started), Toast.LENGTH_SHORT
             ).show()
-            spotFAB?.backgroundTintList = ColorStateList.valueOf(getColor(R.color.secondaryColor))
-            spotFAB?.setImageDrawable(getDrawable(R.drawable.ic_pan_tool_white_24dp));
+            spotFAB.backgroundTintList = ColorStateList.valueOf(getColor(R.color.secondaryColor))
+            spotFAB.setImageDrawable(getDrawable(R.drawable.ic_pan_tool_white_24dp));
+            fetchNewData(carMarker!!.position, DEFAULT_RADIUS_METERS)
         }
         spotting = !spotting
     }
@@ -139,16 +134,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap = googleMap
         mMap.mapType = GoogleMap.MAP_TYPE_NONE
         mMap.addTileOverlay(
-            TileOverlayOptions().tileProvider(CustomTileProvider()).zIndex(-1f).fadeIn(
-                true
-            )
+            TileOverlayOptions().tileProvider(CustomTileProvider()).zIndex(-1f).fadeIn(true)
         )
-
-        carMarker = addCarMarker(
-            DEFAULT_LOCATION,
-            BEARING
-        )
-
+        carMarker = addCarMarker(DEFAULT_LOCATION, BEARING)
+        spotFAB.isEnabled = true //avoid user start spotting before map is ready.
         startSensorObservers()
     }
 
@@ -337,15 +326,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         reactiveLocation.observe().observeOn(AndroidSchedulers.mainThread())
             .map { LatLng(it.latitude, it.longitude) }.subscribe {
-            updateCarLocation(it)
-
-            if (spotting && (!this::lastPositionFetched.isInitialized ||
-                MapUtils.distBetween(
-                    lastPositionFetched!!, it
-                ) > (2 * MapUtils.getVisibleRadius(mMap.projection.visibleRegion).toInt()).coerceAtMost(MAX_RADIUS_METERS))
-            ) {
-                fetchNewData(it, MapUtils.getVisibleRadius(mMap.projection.visibleRegion))
-            }
+                updateCarLocation(it)
+                val actualRadius = MapUtils.getVisibleRadius(mMap.projection.visibleRegion)
+                if (spotting && (!this::lastPositionFetched.isInitialized ||
+                    MapUtils.distBetween(
+                        lastPositionFetched, it
+                    ) > actualRadius / 2)
+                ) {
+                    fetchNewData(it,
+                        (2 * actualRadius).coerceAtMost(MAX_RADIUS_METERS)
+                    )
+                }
         }
         reactiveSensor.observer(SensorType.ROTATION_VECTOR)
             .observeOn(AndroidSchedulers.mainThread()).map(OrientationMapper()).subscribe {
