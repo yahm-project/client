@@ -2,6 +2,7 @@ package it.unibo.yahm.client.sensors
 
 import android.hardware.SensorEvent
 import android.location.Location
+import android.util.Log
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.functions.BiFunction
 import io.reactivex.rxjava3.schedulers.Schedulers
@@ -12,9 +13,9 @@ import kotlin.math.abs
 
 class SensorCombiners(reactiveLocation: ReactiveLocation, reactiveSensor: ReactiveSensor) {
 
-    private val accelerometerObserver = reactiveSensor.observer(SensorType.LINEAR_ACCELERATION)
-    private val gyroscopeObserver = reactiveSensor.observer(SensorType.GYROSCOPE)
-    private val gpsObserver = reactiveLocation.observe()
+    private val accelerometerObservable = reactiveSensor.observer(SensorType.LINEAR_ACCELERATION)
+    private val gyroscopeObservable = reactiveSensor.observer(SensorType.GYROSCOPE)
+    private val gpsObservable = reactiveLocation.observe()
 
 
     fun combineByStretchLength(minStretchLength: Double = 20.0): Observable<CombinedValues> {
@@ -28,7 +29,7 @@ class SensorCombiners(reactiveLocation: ReactiveLocation, reactiveSensor: Reacti
         val gyroscopeValues = mutableListOf<AngularVelocity>()
 
         // aggregate by stretches length
-        gpsObserver.subscribeOn(thread).subscribe {
+        val gpsDisposable = gpsObservable.subscribeOn(thread).subscribe {
             if (startLocation == null) {
                 startLocation = it
             }
@@ -53,23 +54,29 @@ class SensorCombiners(reactiveLocation: ReactiveLocation, reactiveSensor: Reacti
             }
         }
 
-        accelerometerObserver.subscribeOn(thread).subscribe {
+        val accelerometerDisposable = accelerometerObservable.subscribeOn(thread).subscribe {
             accelerationValues.add(Acceleration.fromSensorEvent(it))
         }
-        gyroscopeObserver.subscribeOn(thread).subscribe {
+        val gyroscopeDisposable = gyroscopeObservable.subscribeOn(thread).subscribe {
             gyroscopeValues.add(AngularVelocity.fromSensorEvent(it))
         }
 
-        return subject
+        return subject.doOnDispose {
+            Log.d(javaClass.name, "Stopping subscribers for combineByStretchLength..")
+            thread.shutdown()
+            accelerometerDisposable.dispose()
+            gyroscopeDisposable.dispose()
+            gpsDisposable.dispose()
+        }
     }
 
     fun combineByTime(timeSpan: Long = 20, timeSkip: Long? = null): Observable<CombinedValues> {
         val thread = Schedulers.newThread()
-        val timedLocationSubscriber = TimedLocationSubscriber(gpsObserver)
+        val timedLocationSubscriber = TimedLocationSubscriber(gpsObservable)
 
         return Observable.combineLatest<SensorEvent, SensorEvent, Pair<SensorEvent, SensorEvent>>(
-            accelerometerObserver.subscribeOn(thread),
-            gyroscopeObserver.subscribeOn(thread),
+            accelerometerObservable.subscribeOn(thread),
+            gyroscopeObservable.subscribeOn(thread),
             BiFunction { accelerometerEvent, gyroscopeEvent ->
                 Pair(accelerometerEvent, gyroscopeEvent)
             }).filter { abs(it.first.timestamp - it.second.timestamp) < MAX_TIMESTAMP_DIFFERENCE }
@@ -87,6 +94,11 @@ class SensorCombiners(reactiveLocation: ReactiveLocation, reactiveSensor: Reacti
                     null, timestamp
                 )
             }.subscribeOn(thread)
+            .doOnDispose {
+                Log.d(javaClass.name, "Stopping subscribers for combineByTime..")
+                thread.shutdown()
+                timedLocationSubscriber.dispose()
+            }
     }
 
     companion object {

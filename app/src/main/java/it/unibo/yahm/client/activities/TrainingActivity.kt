@@ -11,6 +11,12 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat.requestPermissions
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.YAxis.AxisDependency
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.utils.ColorTemplate
 import it.unibo.yahm.R
 import it.unibo.yahm.client.sensors.ReactiveLocation
 import it.unibo.yahm.client.sensors.ReactiveSensor
@@ -18,16 +24,8 @@ import it.unibo.yahm.client.sensors.SensorCombiners
 import it.unibo.yahm.client.sensors.SensorType
 import it.unibo.yahm.client.utils.CsvFile
 import it.unibo.yahm.client.utils.FunctionUtils.median
-import it.unibo.yahm.client.utils.FunctionUtils.stdDeviation
 import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
-
-import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.YAxis.AxisDependency;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.utils.ColorTemplate;
 
 
 class TrainingActivity : AppCompatActivity() {
@@ -83,9 +81,9 @@ class TrainingActivity : AppCompatActivity() {
             data.addDataSet(zAccDataSet);
         }
 
-        data.addEntry( Entry(xAccDataSet.entryCount.toFloat(), acc_x), 0);
-        data.addEntry( Entry(yAccDataSet.entryCount.toFloat(), acc_y), 1);
-        data.addEntry( Entry(zAccDataSet.entryCount.toFloat(), acc_z), 2);
+        data.addEntry(Entry(xAccDataSet.entryCount.toFloat(), acc_x), 0);
+        data.addEntry(Entry(yAccDataSet.entryCount.toFloat(), acc_y), 1);
+        data.addEntry(Entry(zAccDataSet.entryCount.toFloat(), acc_z), 2);
         data.notifyDataChanged();
         chart.notifyDataSetChanged();
         chart.setVisibleXRangeMaximum(30f);
@@ -98,7 +96,7 @@ class TrainingActivity : AppCompatActivity() {
         val data = chart.data;
         val count = (data.dataSetCount + 1);
         val color = ColorTemplate.VORDIPLOM_COLORS[count % ColorTemplate.VORDIPLOM_COLORS.size];
-        var set = LineDataSet(null, name);
+        val set = LineDataSet(null, name);
         set.lineWidth = 2f;
         set.circleRadius = 2f;
         set.color = color;
@@ -128,16 +126,8 @@ class TrainingActivity : AppCompatActivity() {
         val sensorValuesFile = CsvFile(
             "sensor_values", listOf(
                 "timestamp",
-                "x_min_acc", "y_min_acc", "z_min_acc",
-                "x_max_acc", "y_max_acc", "z_max_acc",
-                "x_avg_acc", "y_avg_acc", "z_avg_acc",
-                "x_med_acc", "y_med_acc", "z_med_acc",
-                "x_sdv_acc", "y_sdv_acc", "z_sdv_acc",
-                "x_min_ang_vel", "y_min_ang_vel", "z_min_ang_vel",
-                "x_max_ang_vel", "y_max_ang_vel", "z_max_ang_vel",
-                "x_avg_ang_vel", "y_avg_ang_vel", "z_avg_ang_vel",
-                "x_med_ang_vel", "y_med_ang_vel", "z_med_ang_vel",
-                "x_sdv_ang_vel", "y_sdv_ang_vel", "z_sdv_ang_vel",
+                "x_acc", "y_acc", "z_acc",
+                "x_ang_vel", "y_ang_vel", "z_ang_vel",
                 "latitude", "longitude", "speed"
             ),
             applicationContext
@@ -153,9 +143,13 @@ class TrainingActivity : AppCompatActivity() {
             sensorObservers = SensorCombiners(reactiveLocation, reactiveSensor)
             sensorValuesFile.open()
             obstaclesFile.open()
-            Log.i("TrainingActivity", "Saving to ${sensorValuesFile.fileName}, ${obstaclesFile.fileName}")
+            Log.i(
+                "TrainingActivity",
+                "Saving to ${sensorValuesFile.fileName}, ${obstaclesFile.fileName}"
+            )
 
-            reactiveSensor.observer(SensorType.LINEAR_ACCELERATION).sample(100, TimeUnit.MILLISECONDS).subscribe({
+            reactiveSensor.observer(SensorType.LINEAR_ACCELERATION)
+                .sample(100, TimeUnit.MILLISECONDS).subscribe({
                 addAccelerationEntry(it.values[0], it.values[1], it.values[2])
             }, { it.printStackTrace() })
 
@@ -163,36 +157,12 @@ class TrainingActivity : AppCompatActivity() {
                 sensorValuesFile.writeValue(
                     listOf(
                         cv.timestamp,
-                        cv.accelerationValues.map { it.x }.min(),
-                        cv.accelerationValues.map { it.y }.min(),
-                        cv.accelerationValues.map { it.z }.min(),
-                        cv.accelerationValues.map { it.x }.max(),
-                        cv.accelerationValues.map { it.y }.max(),
-                        cv.accelerationValues.map { it.z }.max(),
-                        cv.accelerationValues.map { it.x }.average(),
-                        cv.accelerationValues.map { it.y }.average(),
-                        cv.accelerationValues.map { it.z }.average(),
                         cv.accelerationValues.map { it.x }.median(),
                         cv.accelerationValues.map { it.y }.median(),
                         cv.accelerationValues.map { it.z }.median(),
-                        cv.accelerationValues.map { it.x }.stdDeviation(),
-                        cv.accelerationValues.map { it.y }.stdDeviation(),
-                        cv.accelerationValues.map { it.z }.stdDeviation(),
-                        cv.gyroscopeValues.map { it.x }.min(),
-                        cv.gyroscopeValues.map { it.y }.min(),
-                        cv.gyroscopeValues.map { it.z }.min(),
-                        cv.gyroscopeValues.map { it.x }.max(),
-                        cv.gyroscopeValues.map { it.y }.max(),
-                        cv.gyroscopeValues.map { it.z }.max(),
-                        cv.gyroscopeValues.map { it.x }.average(),
-                        cv.gyroscopeValues.map { it.y }.average(),
-                        cv.gyroscopeValues.map { it.z }.average(),
                         cv.gyroscopeValues.map { it.x }.median(),
                         cv.gyroscopeValues.map { it.y }.median(),
                         cv.gyroscopeValues.map { it.z }.median(),
-                        cv.gyroscopeValues.map { it.x }.stdDeviation(),
-                        cv.gyroscopeValues.map { it.y }.stdDeviation(),
-                        cv.gyroscopeValues.map { it.z }.stdDeviation(),
                         cv.location?.latitude,
                         cv.location?.longitude,
                         cv.location?.speed

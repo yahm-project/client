@@ -1,6 +1,8 @@
 package it.unibo.yahm.client.sensors
 
 import android.location.Location
+import android.util.Log
+import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -10,10 +12,13 @@ import kotlin.math.abs
 class TimedLocationSubscriber(gpsObservable: Observable<Location>, maxQueueSize: Int = 4096) {
 
     private val queue = ConcurrentLinkedDeque<Location>()
+    private val thread = Schedulers.newThread()
+    private val disposable: Disposable
+
     private var lastLocation: Location? = null
 
     init {
-        gpsObservable.subscribeOn(Schedulers.newThread()).subscribe {
+        disposable = gpsObservable.subscribeOn(thread).subscribe {
             queue.push(it)
             if (queue.size > maxQueueSize) {
                 queue.pop()
@@ -44,6 +49,13 @@ class TimedLocationSubscriber(gpsObservable: Observable<Location>, maxQueueSize:
         }
 
         return null
+    }
+
+    @Synchronized
+    fun dispose() {
+        Log.d(javaClass.name, "Stopping subscribers..")
+        thread.shutdown()
+        disposable.dispose()
     }
 
 }

@@ -7,20 +7,16 @@ import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat.requestPermissions
-import hu.akarnokd.rxjava3.retrofit.RxJava3CallAdapterFactory
-import it.unibo.yahm.BuildConfig
 import it.unibo.yahm.R
-import it.unibo.yahm.client.SpotholeService
+import it.unibo.yahm.client.classifiers.FakeQualityClassifier
 import it.unibo.yahm.client.entities.Evaluations
 import it.unibo.yahm.client.sensors.ReactiveLocation
 import it.unibo.yahm.client.sensors.ReactiveSensor
 import it.unibo.yahm.client.sensors.SensorCombiners
 import it.unibo.yahm.client.sensors.SensorType
-import it.unibo.yahm.client.classifiers.FakeQualityClassifier
-import it.unibo.yahm.client.classifiers.RoadIssueClassifier
+import it.unibo.yahm.client.services.RetrofitService
+import it.unibo.yahm.client.services.RoadClassifiersService
 import it.unibo.yahm.client.utils.CsvFile
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import kotlin.system.exitProcess
 
 
@@ -100,21 +96,10 @@ class SimulationActivity : AppCompatActivity() {
         val stopSendingStretches = findViewById<Button>(R.id.btnStopSendingStretches)
         val bufferSize = 20
 
-        val baseUrl = if (BuildConfig.DEBUG) {
-            applicationContext.resources.getString(R.string.spothole_service_development_baseurl)
-        } else {
-            applicationContext.resources.getString(R.string.spothole_service_production_baseurl)
-        }
-
-        val retrofit = Retrofit.Builder().baseUrl(baseUrl)
-            .addConverterFactory(GsonConverterFactory.create())
-            .addCallAdapterFactory(RxJava3CallAdapterFactory.create())
-            .build()
-
         val reactiveLocation = ReactiveLocation(applicationContext)
         val reactiveSensor = ReactiveSensor(applicationContext)
         val sensorCombiners = SensorCombiners(reactiveLocation, reactiveSensor)
-        val service = retrofit.create(SpotholeService::class.java)
+        val service = RetrofitService(applicationContext).spotholeService
 
         startSendingStretches.setOnClickListener { _ ->
             startSendingStretches.isEnabled = false
@@ -152,11 +137,14 @@ class SimulationActivity : AppCompatActivity() {
     private fun initTestClassifier() {
         val testClassifier = findViewById<Button>(R.id.btnTestClassifier)
 
-        testClassifier.setOnClickListener {
-            val classifier = RoadIssueClassifier(applicationContext)
+        val reactiveLocation = ReactiveLocation(applicationContext)
+        val reactiveSensor = ReactiveSensor(applicationContext)
+        val service = RetrofitService(applicationContext).spotholeService
 
-            val input = FloatArray(128 * 6)
-            Log.i("aaaaaaaaaaaaaaa", classifier.classify(input).toString())
+        testClassifier.setOnClickListener {
+            RoadClassifiersService(
+                applicationContext, reactiveSensor, reactiveLocation, service
+            ).startService()
         }
     }
 
