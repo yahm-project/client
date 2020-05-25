@@ -17,6 +17,7 @@ import it.unibo.yahm.client.sensors.ReactiveSensor
 import it.unibo.yahm.client.sensors.SensorCombiners
 import it.unibo.yahm.client.sensors.SensorType
 import it.unibo.yahm.client.classifiers.FakeQualityClassifier
+import it.unibo.yahm.client.classifiers.RoadIssueClassifier
 import it.unibo.yahm.client.utils.CsvFile
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -32,6 +33,7 @@ class SimulationActivity : AppCompatActivity() {
         checkPermissions()
         initSavingStretches()
         initSendingStretches()
+        initTestClassifier()
     }
 
     override fun onRequestPermissionsResult(
@@ -144,6 +146,17 @@ class SimulationActivity : AppCompatActivity() {
             reactiveLocation.dispose()
             reactiveSensor.dispose(SensorType.ACCELEROMETER)
             reactiveSensor.dispose(SensorType.GYROSCOPE)
+        }
+    }
+
+    private fun initTestClassifier() {
+        val testClassifier = findViewById<Button>(R.id.btnTestClassifier)
+
+        testClassifier.setOnClickListener {
+            val classifier = RoadIssueClassifier(applicationContext)
+
+            val input = FloatArray(128 * 6)
+            Log.i("aaaaaaaaaaaaaaa", classifier.classify(input).toString())
         }
     }
 

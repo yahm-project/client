@@ -10,7 +10,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <include layout="@layout/toolbar"/>
+        <include layout="@layout/toolbar" />
 
         <Button
             android:id="@+id/btnStartSavingStretches"
@@ -41,6 +41,12 @@
             android:enabled="false"
             android:text="stop_sending_stretches"
             android:textSize="10sp" />
+
+        <Button
+            android:id="@+id/btnTestClassifier"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="TEST_CLASSIFIER" />
 
     </LinearLayout>
 

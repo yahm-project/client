@@ -183,11 +183,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun drawObstacle(obstacleType: ObstacleType, coordinate: Coordinate) {
         val drawable = when (obstacleType) {
+            ObstacleType.NOTHING -> R.drawable.ic_up_arrow_circle // TODO: fix this
             ObstacleType.POTHOLE -> R.drawable.ic_up_arrow_circle
-            ObstacleType.MANHOLE -> R.drawable.ic_up_arrow_circle
             ObstacleType.SPEED_BUMP -> R.drawable.ic_up_arrow_circle
-            ObstacleType.JOINT -> R.drawable.ic_up_arrow_circle
-
         }
         val circleDrawable = ContextCompat.getDrawable(applicationContext, drawable)
         val markerIcon = DrawableUtils.getMarkerIconFromDrawable(circleDrawable!!)
