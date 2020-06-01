@@ -20,7 +20,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import hu.akarnokd.rxjava3.retrofit.RxJava3CallAdapterFactory
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.schedulers.Schedulers
-import it.unibo.yahm.BuildConfig
+//import it.unibo.yahm.BuildConfig
 import it.unibo.yahm.client.SpotholeService
 import it.unibo.yahm.client.utils.CustomTileProvider
 import it.unibo.yahm.client.utils.DrawableUtils
@@ -51,6 +51,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var carMarker: Marker? = null
     private var drawedLegs: Map<Leg, Polyline> = emptyMap()
     private var drawedObstacles: Map<Coordinate, List<Marker>> = Collections.emptyMap()
+    private var obstaclesTypeAndCoordinates: Map<ObstacleType, List<Coordinate>> = Collections.emptyMap()
     private lateinit var reactiveSensor: ReactiveSensor
     private lateinit var reactiveLocation: ReactiveLocation
     private lateinit var sensorCombiners: SensorCombiners
@@ -85,12 +86,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun initServices() {
-        val baseUrl = if (BuildConfig.DEBUG) {
+       /* val baseUrl = if (BuildConfig.DEBUG) {
             getString(R.string.spothole_service_development_baseurl)
         } else {
             getString(R.string.spothole_service_production_baseurl)
-        }
-
+        }*/
+        val baseUrl = getString(R.string.spothole_service_production_baseurl)
         val retrofit = Retrofit.Builder().baseUrl(baseUrl)
             .addConverterFactory(GsonConverterFactory.create())
             .addCallAdapterFactory(RxJava3CallAdapterFactory.create())
@@ -327,6 +328,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             .map { LatLng(it.latitude, it.longitude) }.subscribe {
                 updateCarLocation(it)
                 val actualRadius = MapUtils.getVisibleRadius(mMap.projection.visibleRegion)
+                    //TODO: if the user's location is nearby an obstacle emit the audio signal.
+                    //REMINDER: use sync access to obstaclesTypeAndCoordinates
                 if (spotting && (!this::lastPositionFetched.isInitialized ||
                     MapUtils.distBetween(
                         lastPositionFetched, it
@@ -381,7 +384,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             radius
         )
             .subscribeOn(Schedulers.single()).subscribe({
-                it.forEach { leg -> drawLeg(leg) }
+                it.forEach { leg ->
+                    synchronized(obstaclesTypeAndCoordinates) {
+                        obstaclesTypeAndCoordinates = leg.obstacles
+                    }
+                    drawLeg(leg)
+                }
             }, {
                 Log.e("SpotService", "An error occurred while fetching new data: $it")
             })
