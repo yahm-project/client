@@ -8,6 +8,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import it.unibo.yahm.client.SpotholeService
 import it.unibo.yahm.client.classifiers.FakeQualityClassifier
 import it.unibo.yahm.client.classifiers.RoadIssueClassifier
+import it.unibo.yahm.client.classifiers.RoadQualityClassifier
 import it.unibo.yahm.client.entities.Coordinate
 import it.unibo.yahm.client.entities.Evaluations
 import it.unibo.yahm.client.entities.Obstacle
@@ -71,11 +72,12 @@ class RoadClassifiersService(
 
         roadQualityDisposable = sensorCombiners.combineByStretchLength(MIN_STRETCH_LENGTH)
             .observeOn(scheduler)
-            .map(FakeQualityClassifier())  // TODO: replace with real classifier
+            .map(RoadQualityClassifier())
             .buffer(QUALITY_BUFFER_SIZE, QUALITY_BUFFER_SIZE - 1)
             .flatMap { buf ->
                 spotholeService.sendEvaluations(
                     Evaluations(
+                        "AndroidClient",
                         buf.map { it.position },
                         buf.map { it.timestamp },
                         buf.map { it.radius },

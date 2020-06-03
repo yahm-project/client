@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 29
-    buildToolsVersion "29.0.2"
+    buildToolsVersion "29.0.3"
 
     defaultConfig {
         applicationId "it.unibo.yahm.client"
@@ -62,9 +62,9 @@ dependencies {
 
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
 
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.0-alpha02'
-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.3.0-alpha02'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.0-alpha02'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.0-alpha03'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.3.0-alpha03'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.0-alpha03'
 
     implementation 'org.tensorflow:tensorflow-lite:2.2.0'
     implementation 'org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly'

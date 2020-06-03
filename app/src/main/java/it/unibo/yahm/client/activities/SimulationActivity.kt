@@ -110,6 +110,7 @@ class SimulationActivity : AppCompatActivity() {
                 .flatMap { buf ->
                     service.sendEvaluations(
                         Evaluations(
+                            "SimulationActivity",
                             buf.map { it.position },
                             buf.map { it.timestamp },
                             buf.map { it.radius },

@@ -3,6 +3,7 @@ package it.unibo.yahm.client.entities
 import android.graphics.Color
 import kotlin.random.Random
 
+
 enum class Quality(val value: Int, val color: Color) {
     VERY_BAD(0, Color.valueOf(139f,0f,0f)),
     BAD(1, Color.valueOf(255f, 99f, 71f)),
