@@ -1,6 +1,7 @@
 package it.unibo.yahm.client.activities
 
 import android.Manifest
+import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Point
 import android.media.MediaPlayer
@@ -9,6 +10,8 @@ import android.os.Handler
 import android.os.SystemClock
 import android.util.DisplayMetrics
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.animation.LinearInterpolator
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -38,7 +41,6 @@ import kotlin.math.roundToInt
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
-
     private lateinit var mMap: GoogleMap
     private var carMarker: Marker? = null
     private var drawedLegs: Map<Leg, Polyline> = emptyMap()
@@ -50,17 +52,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var currentCameraBearing = BEARING
     private lateinit var spotFAB: FloatingActionButton
     private var spotting = false
+    private var isAudioOn = true
     private lateinit var backendService: SpotholeService
     private lateinit var lastPositionFetched: LatLng
     private var holeMediaPlayer: MediaPlayer? = null
     private var speedBumpMediaPlayer: MediaPlayer? = null
     private lateinit var roadClassifiersService: RoadClassifiersService
 
+    private fun checkPermissions() {
+        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        holeMediaPlayer = MediaPlayer.create(this, R.raw.it_pothole_female)
-        speedBumpMediaPlayer = MediaPlayer.create(this, R.raw.it_speedbump_female)
         setContentView(R.layout.activity_maps)
         setSupportActionBar(findViewById(R.id.my_toolbar))
         checkPermissions()
@@ -73,8 +77,82 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun checkPermissions() {
-        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean { // Inflate the menu; this adds items to the action bar if it is present.
+        menuInflater.inflate(R.menu.maps_menu, menu)
+        return true
+    }
+
+    override fun onStart() {
+        super.onStart()
+        restorePreferences()
+        invalidateOptionsMenu()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        initMediaPlayers()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        releaseMediaPlayers()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        savePreferences()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+    }
+
+    private fun restorePreferences() {
+        val sharedPref = getPreferences(Context.MODE_PRIVATE) ?: return
+        isAudioOn = sharedPref.getBoolean(getString(R.string.VOLUME_STATE_KEY), true)
+    }
+
+    private fun savePreferences() {
+        val sharedPref = getPreferences(Context.MODE_PRIVATE) ?: return
+        with (sharedPref.edit()) {
+            putBoolean(getString(R.string.VOLUME_STATE_KEY), isAudioOn)
+            commit()
+        }
+    }
+
+    private fun initMediaPlayers() {
+        holeMediaPlayer = MediaPlayer.create(this, R.raw.it_pothole_female)
+        speedBumpMediaPlayer = MediaPlayer.create(this, R.raw.it_speedbump_female)
+    }
+
+    private fun releaseMediaPlayers() {
+        holeMediaPlayer?.release()
+        speedBumpMediaPlayer?.release()
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val id: Int = item.itemId
+
+        if (id == R.id.toggleAudio) {
+            toggleAudio()
+            setAudioSwitchIcon(item)
+            return true
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        val item = menu.findItem(R.id.toggleAudio)
+        setAudioSwitchIcon(item)
+        return super.onPrepareOptionsMenu(menu)
+    }
+
+    private fun setAudioSwitchIcon(item: MenuItem) {
+        if (isAudioOn) {
+            item.icon = getDrawable(R.drawable.ic_volume_up_solid)
+        } else {
+            item.icon = getDrawable(R.drawable.ic_volume_off_solid)
+        }
     }
 
     private fun initServices() {
@@ -83,6 +161,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         sensorCombiners = SensorCombiners(reactiveLocation, reactiveSensor)
         backendService = RetrofitService(applicationContext).spotholeService
         roadClassifiersService = RoadClassifiersService(applicationContext, reactiveSensor, reactiveLocation, backendService)
+    }
+
+    private fun toggleAudio() {
+        if(isAudioOn) {
+            holeMediaPlayer?.setVolume(0f,0f )
+            speedBumpMediaPlayer?.setVolume(0f,0f )
+        } else {
+            holeMediaPlayer?.setVolume(1f,1f )
+            speedBumpMediaPlayer?.setVolume(1f, 1f )
+        }
+        holeMediaPlayer?.seekTo(0)
+        speedBumpMediaPlayer?.seekTo(0)
+        isAudioOn = !isAudioOn
     }
 
     private fun toggleSpotService() {
@@ -324,9 +415,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                                     distanceBetweenCarAndObstacle < OBSTACLE_ALARM_THRESHOLD_IN_METERS
                             ) {
                                 if (entry.key == ObstacleType.POTHOLE && holeMediaPlayer != null) {
-                                    holeMediaPlayer!!.start()
+                                    holeMediaPlayer?.start()
                                 } else if (entry.key == ObstacleType.SPEED_BUMP && speedBumpMediaPlayer != null) {
-                                    speedBumpMediaPlayer!!.start()
+                                    speedBumpMediaPlayer?.start()
                                 }
                                 Log.d(javaClass.name, "Playing sound for ${entry.key}")
                             } else {
@@ -373,7 +464,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             Log.e("SpotService", "An error occurred while fetching new data: $it")
         })
     }
-
 
     companion object {
         private val DEFAULT_LOCATION = LatLng(45.133331, 12.233333)

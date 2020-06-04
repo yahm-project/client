@@ -5,10 +5,10 @@
     tools:context=".MainActivity">
 
     <item
-        android:id="@+id/toggleMeasuring"
-        android:icon="@drawable/ic_play_arrow_24dp"
+        android:id="@+id/toggleAudio"
+        android:icon="@drawable/ic_volume_up_solid"
         android:orderInCategory="300"
-        android:title="Measure button"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="ifRoom"
+        android:title="Audio toggle" />
 
 </menu>
