@@ -8,7 +8,6 @@ import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
 import android.os.SystemClock
-import android.util.DisplayMetrics
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -53,6 +52,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var spotFAB: FloatingActionButton
     private var spotting = false
     private var isAudioOn = true
+    private var mapReady = false
     private lateinit var backendService: SpotholeService
     private lateinit var lastPositionFetched: LatLng
     private var holeMediaPlayer: MediaPlayer? = null
@@ -68,7 +68,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         setContentView(R.layout.activity_maps)
         setSupportActionBar(findViewById(R.id.my_toolbar))
         checkPermissions()
-        initServices()
+        //initServices()
         (supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).getMapAsync(this)
         spotFAB = findViewById(R.id.fab_spot)
         spotFAB.isEnabled = false
@@ -84,28 +84,33 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onStart() {
         super.onStart()
+        Log.d("CYCLE", "onStart")
         restorePreferences()
-        invalidateOptionsMenu()
     }
 
     override fun onResume() {
         super.onResume()
+        Log.d("CYCLE", "onResume")
+        invalidateOptionsMenu()
         initMediaPlayers()
+        initServices()
+        startSensorObservers()
     }
 
     override fun onPause() {
         super.onPause()
+        Log.d("CYCLE", "onPause")
         releaseMediaPlayers()
+        stopSpottingService()
+        stopSensorObservers()
     }
 
     override fun onStop() {
         super.onStop()
+        Log.d("CYCLE", "onStop")
         savePreferences()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-    }
 
     private fun restorePreferences() {
         val sharedPref = getPreferences(Context.MODE_PRIVATE) ?: return
@@ -178,6 +183,28 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun toggleSpotService() {
         if (spotting) {
+            stopSpottingService()
+        } else {
+            startSpottingService()
+        }
+    }
+
+    private fun startSpottingService() {
+        if(!spotting) {
+            Toast.makeText(
+                applicationContext, getString(R.string.road_scan_started), Toast.LENGTH_SHORT
+            ).show()
+            spotFAB.backgroundTintList = ColorStateList.valueOf(getColor(R.color.secondaryColor))
+            spotFAB.setImageDrawable(getDrawable(R.drawable.ic_pan_tool_white_24dp))
+            fetchNewData(carMarker!!.position, DEFAULT_RADIUS_METERS)
+            roadClassifiersService.startService()
+
+            spotting = true
+        }
+    }
+
+    private fun stopSpottingService() {
+        if(spotting) {
             Toast.makeText(
                 applicationContext, getString(R.string.road_scan_stopped), Toast.LENGTH_SHORT
             ).show()
@@ -186,16 +213,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             )
             spotFAB.setImageDrawable(getDrawable(R.drawable.ic_near_me_white))
             roadClassifiersService.stopService()
-        } else {
-            Toast.makeText(
-                applicationContext, getString(R.string.road_scan_started), Toast.LENGTH_SHORT
-            ).show()
-            spotFAB.backgroundTintList = ColorStateList.valueOf(getColor(R.color.secondaryColor))
-            spotFAB.setImageDrawable(getDrawable(R.drawable.ic_pan_tool_white_24dp))
-            fetchNewData(carMarker!!.position, DEFAULT_RADIUS_METERS)
-            roadClassifiersService.startService()
+
+            spotting = false
         }
-        spotting = !spotting
+
     }
 
     /**
@@ -208,6 +229,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
      * installed Google Play services and returned to the app.
      */
     override fun onMapReady(googleMap: GoogleMap) {
+        Log.d("CYCLE", "onMapReady")
         val circleDrawable =
             ContextCompat.getDrawable(applicationContext, R.drawable.ic_up_arrow_circle)
         val markerIcon = DrawableUtils.getMarkerIconFromDrawable(circleDrawable!!)
@@ -225,10 +247,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 .icon(markerIcon)
         )
         spotFAB.isEnabled = true //avoid user start spotting before map is ready.
-        startSensorObservers()
+        mapReady = true
     }
 
+
     private fun drawLeg(leg: Leg) {
+        if (!mapReady) return
         runOnUiThread {
             val polyline = mMap.addPolyline(
                 PolylineOptions().addAll(
@@ -253,33 +277,38 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun drawObstacle(obstacleType: ObstacleType, coordinate: Coordinate) {
+        if (!mapReady) return
         val drawable = when (obstacleType) {
-            ObstacleType.NOTHING -> R.drawable.ic_up_arrow_circle // TODO: fix this
-            ObstacleType.POTHOLE -> R.drawable.ic_up_arrow_circle
-            ObstacleType.SPEED_BUMP -> R.drawable.ic_up_arrow_circle
+            ObstacleType.NOTHING -> null
+            ObstacleType.POTHOLE -> R.drawable.ic_pothole_marker
+            ObstacleType.SPEED_BUMP -> R.drawable.ic_speedbump_marker
         }
-        val circleDrawable = ContextCompat.getDrawable(applicationContext, drawable)
-        val markerIcon = DrawableUtils.getMarkerIconFromDrawable(circleDrawable!!)
 
-        Log.d(javaClass.name, "Drawing obstacle of type $obstacleType at $coordinate")
+        if(drawable != null) {
+            val circleDrawable = ContextCompat.getDrawable(applicationContext, drawable)
+            val markerIcon = DrawableUtils.getMarkerIconFromDrawable(circleDrawable!!)
 
-        runOnUiThread {
-            val obstacleMarker = mMap.addMarker(
-                MarkerOptions()
-                    .position(coordinate.toLatLng())
-                    .anchor(0.5f, 0.5f)
-                    .icon(markerIcon)
-            )
-            drawedObstacles =
-                drawedObstacles + (coordinate to listOf(obstacleMarker) + (drawedObstacles.getOrElse(
-                    coordinate,
-                    {
-                        emptyList()
-                    })))
+            Log.d(javaClass.name, "Drawing obstacle of type $obstacleType at $coordinate")
+
+            runOnUiThread {
+                val obstacleMarker = mMap.addMarker(
+                    MarkerOptions()
+                        .position(coordinate.toLatLng())
+                        .anchor(0.5f, 0.5f)
+                        .icon(markerIcon)
+                )
+                drawedObstacles =
+                    drawedObstacles + (coordinate to listOf(obstacleMarker) + (drawedObstacles.getOrElse(
+                        coordinate,
+                        {
+                            emptyList()
+                        })))
+            }
         }
     }
 
     private fun updateCarLocation(position: LatLng) {
+        if (!mapReady) return
         val handler = Handler()
         val start = SystemClock.uptimeMillis()
         val projection: Projection = mMap.projection
@@ -314,6 +343,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         tilt: Float = TILT,
         bearing: Float = BEARING
     ) {
+        if (!mapReady) return
         val cameraUpdate = CameraPosition.Builder()
             .target(location)
             .zoom(zoom)
@@ -324,6 +354,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         runOnUiThread { mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraUpdate)) }
     }
 
+
+    /*
     private fun fixCameraPerspective() {
         val mapCenter: LatLng = mMap.cameraPosition.target
         val projection: Projection = mMap.projection
@@ -343,7 +375,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             )
         }
     }
-
+    */
 
     /*
         Camera must adapt its orientation so that the marker is always facing upwards,
@@ -355,6 +387,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private val duration: Long = 500
     private val carRotationHandler = Handler()
     private fun updateRotation(newTargetRotation: Float) {
+        if (!mapReady) return
         if (MapUtils.rotationGap(
                 currentCarTargetRotation,
                 newTargetRotation
@@ -443,6 +476,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             .observeOn(AndroidSchedulers.mainThread()).map(OrientationMapper()).subscribe {
                 updateRotation(it);
             }
+    }
+
+    private fun stopSensorObservers() {
+        reactiveLocation.dispose()
+        reactiveSensor.dispose(SensorType.ROTATION_VECTOR)
     }
 
     private fun fetchNewData(location: LatLng, radius: Float) {

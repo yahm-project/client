@@ -66,9 +66,11 @@ class RoadClassifiersService(
                 )
             }.filter { it.obstacleType != ObstacleType.NOTHING }
             .subscribeOn(scheduler)
-            .subscribe {
+            .subscribe ({
                 obstacles.add(it)
-            }
+            }, {
+                Log.e("RoadClassifierService", it.toString())
+            })
 
         roadQualityDisposable = sensorCombiners.combineByStretchLength(MIN_STRETCH_LENGTH)
             .observeOn(scheduler)
