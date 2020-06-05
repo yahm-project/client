@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Point
+import android.location.Location
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
@@ -294,7 +295,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 val obstacleMarker = mMap.addMarker(
                     MarkerOptions()
                         .position(coordinate.toLatLng())
-                        .anchor(0.5f, 0.5f)
+                        .anchor(0.5f, 1f)
                         .icon(markerIcon)
                 )
                 drawedObstacles =
