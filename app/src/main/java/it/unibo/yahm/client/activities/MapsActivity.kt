@@ -20,6 +20,7 @@ import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.maps.android.SphericalUtil
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.schedulers.Schedulers
 import it.unibo.yahm.R
@@ -36,6 +37,7 @@ import it.unibo.yahm.client.utils.DrawableUtils
 import it.unibo.yahm.client.utils.MapUtils
 import it.unibo.yahm.client.utils.MapUtils.Companion.distBetween
 import java.util.*
+import kotlin.math.round
 import kotlin.math.roundToInt
 
 
@@ -307,6 +309,30 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
     }
+    private fun rotateMarker(marker: Marker, toRotation: Float) {
+        val handler = Handler()
+        val start = SystemClock.uptimeMillis()
+        val startRotation = marker.rotation
+        val duration: Long = 500
+
+        val interpolator = LinearInterpolator()
+
+        handler.post(object : Runnable {
+            override fun run() {
+                isRotating = true
+                val elapsed = SystemClock.uptimeMillis() - start
+                val t: Float = interpolator.getInterpolation(elapsed.toFloat() / duration)
+                val rot = round(t * toRotation + (1 - t) * startRotation)
+                Log.d("rotation", (if (-rot > 180) rot / 2 else rot).toString())
+                marker.rotation = (if (-rot > 180) rot / 2 else rot)
+                if (t < 1.0) {
+                    handler.postDelayed(this, 10)
+                }else {
+                    isRotating = false;
+                }
+            }
+        })
+    }
 
     private fun updateCarLocation(position: LatLng) {
         if (!mapReady) return
@@ -355,38 +381,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         runOnUiThread { mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraUpdate)) }
     }
 
-
-    /*
-    private fun fixCameraPerspective() {
-        val mapCenter: LatLng = mMap.cameraPosition.target
-        val projection: Projection = mMap.projection
-        val centerPoint = projection.toScreenLocation(mapCenter)
-        val displayMetrics = DisplayMetrics()
-        windowManager.defaultDisplay.getMetrics(displayMetrics) //not needed?
-        val displayHeight = displayMetrics.heightPixels
-        centerPoint.y =
-            centerPoint.y - (displayHeight / 4.5).toInt() // move center down for approx 22%
-        val newCenterPoint = projection.fromScreenLocation(centerPoint)
-        runOnUiThread {
-            mMap.animateCamera(
-                CameraUpdateFactory.newLatLngZoom(
-                    newCenterPoint,
-                    ZOOM
-                )
-            )
-        }
-    }
-    */
-
-    /*
-        Camera must adapt its orientation so that the marker is always facing upwards,
-        this requires that the camera continuously change its orientation as soon as the delta
-        between the two angles is above a certain threshold.
-    */
     private var isRotating = false
     private var currentCarTargetRotation = BEARING
-    private val duration: Long = 500
-    private val carRotationHandler = Handler()
     private fun updateRotation(newTargetRotation: Float) {
         if (!mapReady) return
         if (MapUtils.rotationGap(
@@ -394,38 +390,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 newTargetRotation
             ) > DELTA_TRIGGER_ROTATION && !isRotating
         ) {
+            Log.d("rotation", "from: " + currentCarTargetRotation + " to: " + newTargetRotation)
             currentCarTargetRotation = newTargetRotation
-            val start = SystemClock.uptimeMillis()
-            val currentRotation = carMarker!!.rotation
-            val interpolator = LinearInterpolator()
-
-            val rotateCar = object : Runnable {
-                override fun run() {
-                    isRotating = true
-                    val elapsed = SystemClock.uptimeMillis() - start
-                    val t: Float = interpolator.getInterpolation(elapsed.toFloat() / duration)
-                    val newRotation: Float =
-                        t * currentCarTargetRotation + (1 - t) * currentRotation
-
-                    if (t < 1.0) { // Post again 16ms later.
-                        runOnUiThread { carMarker!!.rotation = newRotation }
-                        carRotationHandler.postDelayed(this, 16)
-                    } else {
-                        isRotating = false
-                    }
-                }
-            }
-
+            //rotateMarker(carMarker!!, currentCarTargetRotation)
+            carMarker!!.rotation = currentCarTargetRotation
             if (MapUtils.rotationGap(
                     mMap.cameraPosition.bearing,
                     newTargetRotation
-                ) < DELTA_CAMERA_ROTATION
+                ) >= DELTA_CAMERA_ROTATION
             ) {
-                Log.d("MapActivity", "Rotating only the car")
-                carRotationHandler.post(rotateCar)
-            } else {
-                Log.d("MapActivity", "Rotating everything")
-                carRotationHandler.post(rotateCar)
                 updateCameraLocation(location = carMarker!!.position, bearing = newTargetRotation)
             }
         }
@@ -475,7 +448,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         reactiveSensor.observer(SensorType.ROTATION_VECTOR)
             .observeOn(AndroidSchedulers.mainThread()).map(OrientationMapper()).subscribe {
-                updateRotation(it);
+                updateRotation(it)
             }
     }
 
