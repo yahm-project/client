@@ -3,8 +3,9 @@
     <string name="title_activity_maps">Map</string>
     <string name="title_activity_training">Training</string>
     <string name="title_activity_simulation">Simulation</string>
-    <string name="show_map">Show Map</string>
-    <string name="show_training">Show Training</string>
+    <string name="show_map">Map</string>
+    <string name="show_training">Training</string>
+    <string name="show_simulation">Simulation</string>
     <string name="spotHole">Buca</string>
     <string name="spotBack">Dosso</string>
     <string name="roadJoint">Giunto</string>
@@ -12,7 +13,7 @@
     <string name="start">Start</string>
     <string name="stop">Stop</string>
     <string name="fab_spot">Start spotting</string>
-    <string name="road_scan_started">Road scan started...</string>
+    <string name="road_scan_started">Road scan started…</string>
     <string name="road_scan_stopped">Road scan stopped.</string>
 
 

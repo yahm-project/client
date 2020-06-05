@@ -15,22 +15,41 @@
         <include layout="@layout/toolbar" />
 
         <Button
+            style="@style/Widget.MaterialComponents.Button.Icon"
             android:id="@+id/showMap"
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="@string/show_map" />
+            android:text="@string/show_map"
+            android:backgroundTint="@color/primaryColor"
+            android:textColor="@color/primaryTextColor"
+            android:textSize="24sp"
+            app:icon="@drawable/ic_baseline_map_24"
+            app:iconSize="40dp"
+            android:layout_marginHorizontal="5dp"/>
 
         <Button
             android:id="@+id/showTraining"
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="@string/show_training" />
+            android:text="@string/show_training"
+            android:backgroundTint="@color/primaryColor"
+            android:textColor="@color/primaryTextColor"
+            android:textSize="24sp"
+            app:icon="@drawable/ic_baseline_menu_book_24"
+            app:iconSize="40dp"
+            android:layout_marginHorizontal="5dp"/>
 
         <Button
             android:id="@+id/showSimulation"
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="@string/title_activity_simulation" />
+            android:text="@string/show_simulation"
+            android:backgroundTint="@color/primaryColor"
+            android:textColor="@color/primaryTextColor"
+            android:textSize="24sp"
+            app:icon="@drawable/ic_baseline_build_24"
+            app:iconSize="40dp"
+            android:layout_marginHorizontal="5dp"/>
     </LinearLayout>
 
 

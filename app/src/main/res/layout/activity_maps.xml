@@ -31,6 +31,7 @@
         android:layout_margin="16dp"
         android:contentDescription="@string/fab_spot"
         app:backgroundTint="@color/primaryColor"
+        app:tint="#FFFFFF"
         app:srcCompat="@drawable/ic_time_to_leave_white_24dp" />
 
 

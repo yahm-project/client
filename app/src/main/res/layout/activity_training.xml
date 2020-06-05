@@ -37,25 +37,29 @@
                 android:id="@+id/spotHole"
                 android:layout_width="match_parent"
                 android:layout_height="80dp"
-                android:text="@string/spotHole" />
+                android:text="@string/spotHole"
+                android:layout_marginHorizontal="5dp"/>
 
             <Button
                 android:id="@+id/spotBack"
                 android:layout_width="match_parent"
                 android:layout_height="80dp"
-                android:text="@string/spotBack" />
+                android:text="@string/spotBack"
+                android:layout_marginHorizontal="5dp"/>
 
             <Button
                 android:id="@+id/spotRoadJoint"
                 android:layout_width="match_parent"
                 android:layout_height="80dp"
-                android:text="@string/roadJoint" />
+                android:text="@string/roadJoint"
+                android:layout_marginHorizontal="5dp"/>
 
             <Button
                 android:id="@+id/spotManHole"
                 android:layout_width="match_parent"
                 android:layout_height="80dp"
-                android:text="@string/manHole" />
+                android:text="@string/manHole"
+                android:layout_marginHorizontal="5dp"/>
 
         </LinearLayout>
     </ScrollView>

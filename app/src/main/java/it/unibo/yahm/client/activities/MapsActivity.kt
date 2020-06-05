@@ -212,7 +212,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             spotFAB.backgroundTintList = ColorStateList.valueOf(
                 ContextCompat.getColor(applicationContext, R.color.primaryColor)
             )
-            spotFAB.setImageDrawable(getDrawable(R.drawable.ic_near_me_white))
+            spotFAB.setImageDrawable(getDrawable(R.drawable.ic_time_to_leave_white_24dp))
             roadClassifiersService.stopService()
 
             spotting = false
