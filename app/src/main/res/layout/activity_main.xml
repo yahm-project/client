@@ -18,9 +18,7 @@
             android:id="@+id/showMap"
             android:layout_width="match_parent"
             android:layout_height="96dp"
-            android:text="@string/show_map"
-            style="@style/Widget.MaterialComponents.Button.Icon"
-            android:textColor="@color/primaryLightColor"/>
+            android:text="@string/show_map" />
 
         <Button
             android:id="@+id/showTraining"
