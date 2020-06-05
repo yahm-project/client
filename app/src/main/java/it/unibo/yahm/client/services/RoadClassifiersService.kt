@@ -42,6 +42,7 @@ class RoadClassifiersService(
         roadIssueDisposable = sensorCombiners.combineByTime(SENSING_INTERVAL)
             .observeOn(scheduler)
             .buffer(WINDOW_LENGTH, (WINDOW_LENGTH * WINDOW_OVERLAP_PERCENTAGE).toInt())
+            .filter { values -> values.any { it.location != null }}
             .map { values ->
                 val inputBuffer = FloatArray(WINDOW_LENGTH * FEATURES_COUNT)
 
@@ -59,7 +60,7 @@ class RoadClassifiersService(
                     inputBuffer[i * FEATURES_COUNT + 5] =
                         cv.gyroscopeValues.map { it.z }.median().toFloat()
                 }
-                val location = values[WINDOW_LENGTH / 2].location!!
+                val location = values.first { it.location != null }.location!!
                 Obstacle(
                     Coordinate(location.latitude, location.longitude),
                     roadIssueClassifier.classify(inputBuffer)
@@ -81,7 +82,7 @@ class RoadClassifiersService(
                     Evaluations(
                         "AndroidClient",
                         buf.map { it.position },
-                        buf.map { it.timestamp },
+                        buf.map { it.timestamp / 1000 }, // timestamp must be in seconds
                         buf.map { it.radius },
                         buf.take(QUALITY_BUFFER_SIZE - 1).map { it.quality },
                         obstacles
