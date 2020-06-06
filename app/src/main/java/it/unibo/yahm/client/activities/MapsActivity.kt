@@ -1,10 +1,10 @@
 package it.unibo.yahm.client.activities
 
-import android.Manifest
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Point
-import android.location.Location
+import android.graphics.Rect
+import android.graphics.RectF
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
@@ -15,12 +15,12 @@ import android.view.MenuItem
 import android.view.animation.LinearInterpolator
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.contains
+import androidx.core.graphics.minus
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.maps.android.SphericalUtil
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.schedulers.Schedulers
 import it.unibo.yahm.R
@@ -38,7 +38,6 @@ import it.unibo.yahm.client.utils.MapUtils
 import it.unibo.yahm.client.utils.MapUtils.Companion.distBetween
 import java.util.*
 import kotlin.math.round
-import kotlin.math.roundToInt
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -62,16 +61,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var speedBumpMediaPlayer: MediaPlayer? = null
     private lateinit var roadClassifiersService: RoadClassifiersService
 
-    private fun checkPermissions() {
-        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
         setSupportActionBar(findViewById(R.id.my_toolbar))
-        checkPermissions()
-        //initServices()
         (supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).getMapAsync(this)
         spotFAB = findViewById(R.id.fab_spot)
         spotFAB.isEnabled = false
@@ -239,7 +233,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap = googleMap
         mMap.mapType = GoogleMap.MAP_TYPE_NONE
         mMap.addTileOverlay(
-            TileOverlayOptions().tileProvider(CustomTileProvider()).zIndex(-1f).fadeIn(true)
+            TileOverlayOptions().tileProvider(CustomTileProvider()).visible(true)
         )
         carMarker = mMap.addMarker(
             MarkerOptions()
@@ -257,14 +251,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun drawLeg(leg: Leg) {
         if (!mapReady) return
         runOnUiThread {
+            Log.i("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "${leg.from.id}-${leg.to.id}: ${leg.quality}")
             val polyline = mMap.addPolyline(
-                PolylineOptions().addAll(
-                    listOf(
-                        leg.from.coordinates.toLatLng(),
-                        leg.to.coordinates.toLatLng()
-                    )
-                )
-                    .color(Quality.fromValue(leg.quality.roundToInt())!!.color.toArgb())
+                PolylineOptions().addAll(listOf(leg.from.coordinates.toLatLng(), leg.to.coordinates.toLatLng()))
+                    .color(Quality.fromValue(leg.quality)!!.color)
                     .startCap(RoundCap()).endCap(RoundCap())
             )
             drawedLegs = drawedLegs + (leg to polyline)
@@ -344,24 +334,44 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val duration: Long = 500
         val interpolator = LinearInterpolator()
 
+//        val display = windowManager.defaultDisplay
+//        val size = Point()
+//        display.getSize(size)
+//        val width = size.x
+//        val height = size.y
+
+        val finalScreenPosition = projection.toScreenLocation(position)
+        val PADDING = 30
+
+//        if (finalScreenPosition.x < PADDING || finalScreenPosition.x > width - PADDING ||
+//                finalScreenPosition.y < PADDING || finalScreenPosition.y > height - PADDING) {
+//            updateCameraLocation(position, currentCameraBearing)
+//        }
+
+
+        if (!mMap.projection.visibleRegion.latLngBounds.contains(position)) {
+            updateCameraLocation(position, currentCameraBearing)
+        }
+
+        runOnUiThread { carMarker!!.position = position }
+
         val runnableCode = object : Runnable {
             override fun run() {
                 val elapsed = SystemClock.uptimeMillis() - start
                 val t: Float = interpolator.getInterpolation(elapsed.toFloat() / duration)
 
-                if (t > 1.0) { //end the animation on the right place
-                    updateCameraLocation(position, bearing = currentCameraBearing)
-                    runOnUiThread { carMarker!!.position = position }
-                } else {
-                    val lng: Double = t * position.longitude + (1 - t) * startLatLng.longitude
-                    val lat: Double = t * position.latitude + (1 - t) * startLatLng.latitude
-                    runOnUiThread { carMarker!!.position = LatLng(lat, lng) }
+                val lng: Double = t * position.longitude + (1 - t) * startLatLng.longitude
+                val lat: Double = t * position.latitude + (1 - t) * startLatLng.latitude
+                val pos = LatLng(lat, lng)
+                runOnUiThread { carMarker!!.position = pos }
+
+                if (t < 1.0) {
                     handler.postDelayed(this, 16)
                 }
             }
         }
 
-        handler.post(runnableCode)
+        // handler.post(runnableCode)
     }
 
     private fun updateCameraLocation(
@@ -390,7 +400,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 newTargetRotation
             ) > DELTA_TRIGGER_ROTATION && !isRotating
         ) {
-            Log.d("rotation", "from: " + currentCarTargetRotation + " to: " + newTargetRotation)
+            Log.d("rotation", "from: $currentCarTargetRotation to: $newTargetRotation")
             currentCarTargetRotation = newTargetRotation
             //rotateMarker(carMarker!!, currentCarTargetRotation)
             carMarker!!.rotation = currentCarTargetRotation
@@ -481,7 +491,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         private val DEFAULT_LOCATION = LatLng(45.133331, 12.233333)
         private const val DELTA_TRIGGER_ROTATION: Int = 15
         private const val DELTA_CAMERA_ROTATION: Int = 45
-        private const val ZOOM: Float = 17f
+        private const val ZOOM: Float = 18f
         private const val TILT: Float = 45f
         private const val BEARING: Float = 0f
         private const val MAX_RADIUS_METERS = 2000f //won't ask for disease further away than that

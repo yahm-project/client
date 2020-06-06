@@ -2,9 +2,11 @@ package it.unibo.yahm.client.services
 
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import io.reactivex.rxjava3.core.Scheduler
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
+import it.unibo.yahm.R
 import it.unibo.yahm.client.SpotholeService
 import it.unibo.yahm.client.classifiers.FakeQualityClassifier
 import it.unibo.yahm.client.classifiers.RoadIssueClassifier
@@ -20,7 +22,7 @@ import it.unibo.yahm.client.utils.FunctionUtils.median
 
 
 class RoadClassifiersService(
-    context: Context,
+    private val context: Context,
     reactiveSensor: ReactiveSensor,
     reactiveLocation: ReactiveLocation,
     private val spotholeService: SpotholeService
@@ -70,7 +72,8 @@ class RoadClassifiersService(
             .subscribe ({
                 obstacles.add(it)
             }, {
-                Log.e("RoadClassifierService", it.toString())
+                Log.e("RoadClassifierService", "Failed to classify road obstacles")
+                it.printStackTrace()
             })
 
         roadQualityDisposable = sensorCombiners.combineByStretchLength(MIN_STRETCH_LENGTH)
@@ -80,7 +83,6 @@ class RoadClassifiersService(
             .flatMap { buf ->
                 spotholeService.sendEvaluations(
                     Evaluations(
-                        "AndroidClient",
                         buf.map { it.position },
                         buf.map { it.timestamp / 1000 }, // timestamp must be in seconds
                         buf.map { it.radius },
@@ -89,10 +91,13 @@ class RoadClassifiersService(
                     )
                 )
             }
+            .retry(RETRY_TIMES)
             .subscribe({
                 Log.d(javaClass.name, "Make request to the server..")
             }, {
-                Log.e(javaClass.name, "Failed to send evaluations to the server", it)
+                Toast.makeText(context, "Failed to send evaluations to the server", Toast.LENGTH_SHORT).show()
+                it.printStackTrace()
+                stopService()
             })
     }
 
@@ -111,6 +116,7 @@ class RoadClassifiersService(
         private const val SENSING_INTERVAL: Long = 20
         private const val QUALITY_BUFFER_SIZE = 20
         private const val MIN_STRETCH_LENGTH = 20.0
+        private const val RETRY_TIMES = 3L
     }
 
 }

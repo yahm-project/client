@@ -1,12 +1,9 @@
 package it.unibo.yahm.client.activities
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat.requestPermissions
 import it.unibo.yahm.R
 import it.unibo.yahm.client.classifiers.FakeQualityClassifier
 import it.unibo.yahm.client.entities.Evaluations
@@ -17,7 +14,6 @@ import it.unibo.yahm.client.sensors.SensorType
 import it.unibo.yahm.client.services.RetrofitService
 import it.unibo.yahm.client.services.RoadClassifiersService
 import it.unibo.yahm.client.utils.CsvFile
-import kotlin.system.exitProcess
 
 
 class SimulationActivity : AppCompatActivity() {
@@ -26,25 +22,9 @@ class SimulationActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_simulation)
         setSupportActionBar(findViewById(R.id.my_toolbar))
-        checkPermissions()
         initSavingStretches()
         initSendingStretches()
         initTestClassifier()
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        when (requestCode) {
-            1 -> {
-                if (grantResults.any { it != PackageManager.PERMISSION_GRANTED }) {
-                    this.finish()
-                    exitProcess(1)
-                }
-            }
-        }
     }
 
     private fun initSavingStretches() {
@@ -110,7 +90,6 @@ class SimulationActivity : AppCompatActivity() {
                 .flatMap { buf ->
                     service.sendEvaluations(
                         Evaluations(
-                            "SimulationActivity",
                             buf.map { it.position },
                             buf.map { it.timestamp },
                             buf.map { it.radius },
@@ -147,17 +126,6 @@ class SimulationActivity : AppCompatActivity() {
                 applicationContext, reactiveSensor, reactiveLocation, service
             ).startService()
         }
-    }
-
-    private fun checkPermissions() {
-        requestPermissions(
-            this,
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            ),
-            1
-        )
     }
 
 }

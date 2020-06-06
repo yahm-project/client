@@ -1,7 +1,5 @@
 package it.unibo.yahm.client.activities
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -10,7 +8,6 @@ import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat.requestPermissions
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.YAxis.AxisDependency
 import com.github.mikephil.charting.data.Entry
@@ -25,7 +22,6 @@ import it.unibo.yahm.client.sensors.SensorType
 import it.unibo.yahm.client.utils.CsvFile
 import it.unibo.yahm.client.utils.FunctionUtils.median
 import java.util.concurrent.TimeUnit
-import kotlin.system.exitProcess
 
 
 class TrainingActivity : AppCompatActivity() {
@@ -39,7 +35,6 @@ class TrainingActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_training)
         setSupportActionBar(findViewById(R.id.my_toolbar))
-        checkPermissions()
         initChart()
         initSavingEvents()
     }
@@ -196,32 +191,6 @@ class TrainingActivity : AppCompatActivity() {
             reactiveSensor.dispose(SensorType.GYROSCOPE)
             sensorValuesFile.close()
             obstaclesFile.close()
-        }
-    }
-
-    private fun checkPermissions() {
-        requestPermissions(
-            this,
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            ),
-            1
-        )
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        when (requestCode) {
-            1 -> {
-                if (grantResults.any { it != PackageManager.PERMISSION_GRANTED }) {
-                    this.finish()
-                    exitProcess(1)
-                }
-            }
         }
     }
 

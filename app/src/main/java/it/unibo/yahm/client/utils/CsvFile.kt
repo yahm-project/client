@@ -31,12 +31,6 @@ class CsvFile(
         bufferedWriter!!.write(value.joinToString(separator = ",", postfix = "\n"))
     }
 
-    fun writeValues(values: List<List<String>>) {
-        for (value in values) {
-            writeValue(value)
-        }
-    }
-
     fun close() {
         bufferedWriter ?: error("Open file first")
         bufferedWriter!!.close()

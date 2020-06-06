@@ -2,42 +2,43 @@ package it.unibo.yahm.client.activities
 
 import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
+import it.unibo.yahm.BuildConfig
 import it.unibo.yahm.R
+import kotlin.system.exitProcess
 
 
 class MainActivity : AppCompatActivity() {
 
-    private var showMapButton: Button? = null
-    private var showTrainingButton: Button? = null
-    private var showSimulationButton: Button? = null
+    private lateinit var showMapButton: Button
+    private lateinit var showTrainingButton: Button
+    private lateinit var showSimulationButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.my_toolbar))
 
-        showMapButton = findViewById<Button>(R.id.showMap)
-        showMapButton?.setOnClickListener {
+        showMapButton = findViewById(R.id.showMap)
+        showMapButton.setOnClickListener {
             val intent = Intent(this, MapsActivity::class.java)
             startActivity(intent)
         }
 
-        showTrainingButton = findViewById<Button>(R.id.showTraining)
-        showTrainingButton?.setOnClickListener {
+        showTrainingButton = findViewById(R.id.showTraining)
+        showTrainingButton.setOnClickListener {
             val intent = Intent(this, TrainingActivity::class.java)
             startActivity(intent)
         }
 
-        showSimulationButton = findViewById<Button>(R.id.showSimulation)
-        showSimulationButton?.setOnClickListener {
+        showSimulationButton = findViewById(R.id.showSimulation)
+        showSimulationButton.setOnClickListener {
             val intent = Intent(this, SimulationActivity::class.java)
             startActivity(intent)
         }
@@ -45,34 +46,35 @@ class MainActivity : AppCompatActivity() {
         checkPermissions()
     }
 
-
     private fun checkPermissions() {
         val requestPermissions =
             registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
-                for (permission in result.keys) {
-                    when (permission) {
-                        Manifest.permission.ACCESS_FINE_LOCATION -> {
-                            // If request is cancelled, the result map is empty.
-                            if (result.isNotEmpty() && !result[permission]!!) {
-                                Log.d("PERMISSION", "ACCESS_FINE_LOCATION denied.")
-                                showMapButton?.isEnabled = false
-                                showTrainingButton?.isEnabled = false
-                            }
-                        }
-                        Manifest.permission.INTERNET -> {
-                            // If request is cancelled, the result map is empty.
-                            if (result.isNotEmpty() && !result[permission]!!) {
-                                Log.d("PERMISSION", "INTERNET denied.")
-                                showMapButton?.isEnabled = false
-                            }
-                        }
-                        Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE -> {
-                            // If request is cancelled, the result map is empty.
-                            if (result.isNotEmpty() && !result[permission]!!) {
-                                Log.d("PERMISSION", "EXTERNAL_STORAGE denied.")
-                                showTrainingButton?.isEnabled = false
-                            }
-                        }
+                val permissions = result.filter { it.value }.map {it.key}
+                val mapPermissionsGranted = listOf(Manifest.permission.INTERNET,
+                    Manifest.permission.ACCESS_FINE_LOCATION).all { permissions.contains(it) }
+
+                if (BuildConfig.DEBUG) {
+                    showMapButton.visibility = View.VISIBLE
+                    showTrainingButton.visibility = View.VISIBLE
+                    showSimulationButton.visibility = View.VISIBLE
+
+                    showMapButton.isEnabled = mapPermissionsGranted
+                    showTrainingButton.isEnabled = listOf(Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        .all { permissions.contains(it) }
+                    showSimulationButton.isEnabled = listOf(Manifest.permission.INTERNET,
+                        Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE).all { permissions.contains(it) }
+                } else {
+                    if (mapPermissionsGranted) {
+                        val intent = Intent(this, MapsActivity::class.java)
+                        startActivity(intent)
+                    } else {
+                        Log.w(javaClass.name, "Some required permissions are denied: ${result.filter { !it.value }}")
+                        Toast.makeText(applicationContext, "Some required permissions are denied",
+                            Toast.LENGTH_SHORT).show()
+                        this.finish()
+                        exitProcess(1)
                     }
                 }
             }
@@ -82,7 +84,7 @@ class MainActivity : AppCompatActivity() {
                 Manifest.permission.INTERNET,
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.READ_EXTERNAL_STORAGE
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
             )
         )
     }

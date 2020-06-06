@@ -3,7 +3,7 @@ package it.unibo.yahm.client.entities
 data class Leg(
     val from: Node,
     val to: Node,
-    var quality: Double,
+    var quality: Int,
     var obstacles: Map<ObstacleType, List<Coordinate>>
 ) {
     override fun equals(other: Any?): Boolean {
