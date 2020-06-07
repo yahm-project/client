@@ -25,33 +25,37 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.my_toolbar))
 
+        checkPermissions()
+
         showMapButton = findViewById(R.id.showMap)
+        showMapButton.visibility = View.GONE
         showMapButton.setOnClickListener {
             val intent = Intent(this, MapsActivity::class.java)
             startActivity(intent)
         }
 
         showTrainingButton = findViewById(R.id.showTraining)
+        showTrainingButton.visibility = View.GONE
         showTrainingButton.setOnClickListener {
             val intent = Intent(this, TrainingActivity::class.java)
             startActivity(intent)
         }
 
         showSimulationButton = findViewById(R.id.showSimulation)
+        showSimulationButton.visibility = View.GONE
         showSimulationButton.setOnClickListener {
             val intent = Intent(this, SimulationActivity::class.java)
             startActivity(intent)
         }
-
-        checkPermissions()
     }
 
     private fun checkPermissions() {
         val requestPermissions =
             registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
                 val permissions = result.filter { it.value }.map {it.key}
-                val mapPermissionsGranted = listOf(Manifest.permission.INTERNET,
-                    Manifest.permission.ACCESS_FINE_LOCATION).all { permissions.contains(it) }
+                val mapPermissionsGranted = permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION)
+
+                Log.d(javaClass.name, "Granted permissions: $permissions")
 
                 if (BuildConfig.DEBUG) {
                     showMapButton.visibility = View.VISIBLE
@@ -60,10 +64,8 @@ class MainActivity : AppCompatActivity() {
 
                     showMapButton.isEnabled = mapPermissionsGranted
                     showTrainingButton.isEnabled = listOf(Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                        .all { permissions.contains(it) }
-                    showSimulationButton.isEnabled = listOf(Manifest.permission.INTERNET,
-                        Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE).all { permissions.contains(it) }
+                    showSimulationButton.isEnabled = listOf(Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE).all { permissions.contains(it) }
                 } else {
                     if (mapPermissionsGranted) {
@@ -79,14 +81,13 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-        requestPermissions.launch(
-            arrayOf(
-                Manifest.permission.INTERNET,
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            )
-        )
+        val permissions = mutableListOf(Manifest.permission.INTERNET,
+            Manifest.permission.ACCESS_FINE_LOCATION)
+        if (BuildConfig.DEBUG) {
+            permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
+
+        requestPermissions.launch(permissions.toTypedArray())
     }
 
 }
