@@ -58,6 +58,10 @@ class ReactiveSensor(context: Context) {
         sensorManager.unregisterListener(listeners.remove(sensorType))
     }
 
+    fun isDisposed(sensorType: SensorType): Boolean{
+        return !listeners.containsKey(sensorType)
+    }
+
     private fun sensorIntType(sensorType: String): Int = when (sensorType) {
         "ACCELEROMETER" -> Sensor.TYPE_ACCELEROMETER
         "ACCELEROMETER_UNCALIBRATED" -> Sensor.TYPE_ACCELEROMETER_UNCALIBRATED
