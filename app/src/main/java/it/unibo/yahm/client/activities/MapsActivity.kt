@@ -358,14 +358,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         if (MapUtils.rotationGap(currentCarTargetRotation, newTargetRotation) > DELTA_TRIGGER_ROTATION) {
             Log.d(javaClass.name, "Rotating car from $currentCarTargetRotation to $newTargetRotation")
             currentCarTargetRotation = newTargetRotation
-            rotateMarker(carMarker!!, newTargetRotation)
+            carMarker!!.rotation = newTargetRotation
+            //rotateMarker(carMarker!!, newTargetRotation)
             /* if (MapUtils.rotationGap(mMap.cameraPosition.bearing, newTargetRotation) >= DELTA_CAMERA_ROTATION) {
                  updateCameraLocation(location = carMarker!!.position, bearing = newTargetRotation)
              }*/
         }
     }
 
-    private var stopPreviousRotationInterpolation = AtomicBoolean(false)
+    /*private var stopPreviousRotationInterpolation = AtomicBoolean(false)
     private fun rotateMarker(marker: Marker, toRotation: Float) {
         val handler = Handler()
         val start = SystemClock.uptimeMillis()
@@ -392,7 +393,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
         stopPreviousRotationInterpolation = AtomicBoolean(false)
         handler.post(interpolate(stopPreviousRotationInterpolation))
-    }
+    }*/
 
     private fun signalObstacle(latLng: LatLng, speed: Float) {
         synchronized(obstaclesTypeAndCoordinates) {

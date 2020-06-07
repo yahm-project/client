@@ -9,12 +9,11 @@ import kotlin.math.abs
 
 class RoadQualityClassifier: Function<CombinedValues, StretchQuality> {
     companion object {
-        const val PERFECT_THRESHOLD = 0.8
-        const val GOOD_THRESHOLD = 1.5
-        const val MEDIUM_THRESHOLD = 2.5
-        const val BAD_THRESHOLD = 3.5
+        const val PERFECT_THRESHOLD = 1.2
+        const val GOOD_THRESHOLD = 2.2
+        const val MEDIUM_THRESHOLD = 3.2
+        const val BAD_THRESHOLD = 4.2
         const val DEFAULT_ACCURACY = 100.0
-        //val VERY_BAD_THRESHOLD = 4.5
     }
     private fun chooseQuality(avg: Double): Quality {
         return if (avg <= PERFECT_THRESHOLD) {
