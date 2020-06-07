@@ -110,7 +110,7 @@ class RoadClassifiersService(
     }
 
     companion object {
-        private const val WINDOW_LENGTH = 128
+        private const val WINDOW_LENGTH = 32
         private const val WINDOW_OVERLAP_PERCENTAGE = 0.5
         private const val FEATURES_COUNT = 6
         private const val SENSING_INTERVAL: Long = 20

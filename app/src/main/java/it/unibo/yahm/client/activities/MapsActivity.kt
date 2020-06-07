@@ -3,8 +3,6 @@ package it.unibo.yahm.client.activities
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Point
-import android.graphics.Rect
-import android.graphics.RectF
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
@@ -16,8 +14,6 @@ import android.view.animation.LinearInterpolator
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.contains
-import androidx.core.graphics.minus
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -37,6 +33,7 @@ import it.unibo.yahm.client.utils.DrawableUtils
 import it.unibo.yahm.client.utils.MapUtils
 import it.unibo.yahm.client.utils.MapUtils.Companion.distBetween
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.round
 
 
@@ -60,6 +57,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var holeMediaPlayer: MediaPlayer? = null
     private var speedBumpMediaPlayer: MediaPlayer? = null
     private lateinit var roadClassifiersService: RoadClassifiersService
+    private val screenSize = Point()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,6 +70,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         spotFAB.setOnClickListener {
             toggleSpotService()
         }
+
+        windowManager.defaultDisplay.getSize(screenSize)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean { // Inflate the menu; this adds items to the action bar if it is present.
@@ -233,7 +233,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap = googleMap
         mMap.mapType = GoogleMap.MAP_TYPE_NONE
         mMap.addTileOverlay(
-            TileOverlayOptions().tileProvider(CustomTileProvider()).visible(true)
+            TileOverlayOptions().tileProvider(CustomTileProvider()).zIndex(-1f).fadeIn(true)
         )
         carMarker = mMap.addMarker(
             MarkerOptions()
@@ -251,7 +251,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun drawLeg(leg: Leg) {
         if (!mapReady) return
         runOnUiThread {
-            Log.i("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "${leg.from.id}-${leg.to.id}: ${leg.quality}")
+            Log.d(javaClass.name, "Drawing leg from ${leg.from.id} to ${leg.to.id} with quality ${leg.quality}")
             val polyline = mMap.addPolyline(
                 PolylineOptions().addAll(listOf(leg.from.coordinates.toLatLng(), leg.to.coordinates.toLatLng()))
                     .color(Quality.fromValue(leg.quality)!!.color)
@@ -299,31 +299,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
     }
-    private fun rotateMarker(marker: Marker, toRotation: Float) {
-        val handler = Handler()
-        val start = SystemClock.uptimeMillis()
-        val startRotation = marker.rotation
-        val duration: Long = 500
 
-        val interpolator = LinearInterpolator()
-
-        handler.post(object : Runnable {
-            override fun run() {
-                isRotating = true
-                val elapsed = SystemClock.uptimeMillis() - start
-                val t: Float = interpolator.getInterpolation(elapsed.toFloat() / duration)
-                val rot = round(t * toRotation + (1 - t) * startRotation)
-                Log.d("rotation", (if (-rot > 180) rot / 2 else rot).toString())
-                marker.rotation = (if (-rot > 180) rot / 2 else rot)
-                if (t < 1.0) {
-                    handler.postDelayed(this, 10)
-                }else {
-                    isRotating = false;
-                }
-            }
-        })
-    }
-
+    private var stopPreviousInterpolation = AtomicBoolean(false)
     private fun updateCarLocation(position: LatLng) {
         if (!mapReady) return
         val handler = Handler()
@@ -331,55 +308,40 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val projection: Projection = mMap.projection
         val startPoint: Point = projection.toScreenLocation(carMarker!!.position)
         val startLatLng = projection.fromScreenLocation(startPoint)
-        val duration: Long = 500
+        val duration: Long = 1000
         val interpolator = LinearInterpolator()
 
-//        val display = windowManager.defaultDisplay
-//        val size = Point()
-//        display.getSize(size)
-//        val width = size.x
-//        val height = size.y
-
         val finalScreenPosition = projection.toScreenLocation(position)
-        val PADDING = 30
-
-//        if (finalScreenPosition.x < PADDING || finalScreenPosition.x > width - PADDING ||
-//                finalScreenPosition.y < PADDING || finalScreenPosition.y > height - PADDING) {
-//            updateCameraLocation(position, currentCameraBearing)
-//        }
-
-
-        if (!mMap.projection.visibleRegion.latLngBounds.contains(position)) {
-            updateCameraLocation(position, currentCameraBearing)
+        if (finalScreenPosition.x < SCREEN_PADDING || finalScreenPosition.x > screenSize.x - SCREEN_PADDING ||
+                finalScreenPosition.y < SCREEN_PADDING || finalScreenPosition.y > screenSize.y - SCREEN_PADDING) {
+            updateCameraLocation(location = position, bearing = currentCameraBearing)
         }
 
-        runOnUiThread { carMarker!!.position = position }
+        stopPreviousInterpolation.set(true)
 
-        val runnableCode = object : Runnable {
-            override fun run() {
-                val elapsed = SystemClock.uptimeMillis() - start
-                val t: Float = interpolator.getInterpolation(elapsed.toFloat() / duration)
+        fun interpolate(stopInterpolation: AtomicBoolean): Runnable {
+            return object : Runnable {
+                override fun run() {
+                    val elapsed = SystemClock.uptimeMillis() - start
+                    val t: Float = interpolator.getInterpolation(elapsed.toFloat() / duration)
 
-                val lng: Double = t * position.longitude + (1 - t) * startLatLng.longitude
-                val lat: Double = t * position.latitude + (1 - t) * startLatLng.latitude
-                val pos = LatLng(lat, lng)
-                runOnUiThread { carMarker!!.position = pos }
+                    val lng: Double = t * position.longitude + (1 - t) * startLatLng.longitude
+                    val lat: Double = t * position.latitude + (1 - t) * startLatLng.latitude
+                    val pos = LatLng(lat, lng)
+                    runOnUiThread { carMarker!!.position = pos }
 
-                if (t < 1.0) {
-                    handler.postDelayed(this, 16)
+                    if (t < 1.0 && !stopInterpolation.get()) {
+                        handler.postDelayed(this, 16)
+                    }
                 }
             }
         }
 
-        // handler.post(runnableCode)
+        stopPreviousInterpolation = AtomicBoolean(false)
+        handler.post(interpolate(stopPreviousInterpolation))
     }
 
-    private fun updateCameraLocation(
-        location: LatLng,
-        zoom: Float = ZOOM,
-        tilt: Float = TILT,
-        bearing: Float = BEARING
-    ) {
+    private fun updateCameraLocation(location: LatLng, zoom: Float = ZOOM, tilt: Float = TILT, bearing: Float = BEARING) {
         if (!mapReady) return
         val cameraUpdate = CameraPosition.Builder()
             .target(location)
@@ -388,6 +350,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             .bearing(bearing)
             .build()
         currentCameraBearing = bearing
+        Log.d(javaClass.name, "Update camera location: $location, bearing: $bearing")
         runOnUiThread { mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraUpdate)) }
     }
 
@@ -395,23 +358,43 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var currentCarTargetRotation = BEARING
     private fun updateRotation(newTargetRotation: Float) {
         if (!mapReady) return
-        if (MapUtils.rotationGap(
-                currentCarTargetRotation,
-                newTargetRotation
-            ) > DELTA_TRIGGER_ROTATION && !isRotating
-        ) {
-            Log.d("rotation", "from: $currentCarTargetRotation to: $newTargetRotation")
+        if (MapUtils.rotationGap(currentCarTargetRotation, newTargetRotation) > DELTA_TRIGGER_ROTATION) {
+            Log.d(javaClass.name, "Rotating car from $currentCarTargetRotation to $newTargetRotation")
             currentCarTargetRotation = newTargetRotation
-            //rotateMarker(carMarker!!, currentCarTargetRotation)
-            carMarker!!.rotation = currentCarTargetRotation
-            if (MapUtils.rotationGap(
-                    mMap.cameraPosition.bearing,
-                    newTargetRotation
-                ) >= DELTA_CAMERA_ROTATION
-            ) {
+            rotateMarker(carMarker!!, newTargetRotation)
+            if (MapUtils.rotationGap(mMap.cameraPosition.bearing, newTargetRotation) >= DELTA_CAMERA_ROTATION) {
                 updateCameraLocation(location = carMarker!!.position, bearing = newTargetRotation)
             }
         }
+    }
+
+    private var stopPreviousRotationInterpolation = AtomicBoolean(false)
+    private fun rotateMarker(marker: Marker, toRotation: Float) {
+        val handler = Handler()
+        val start = SystemClock.uptimeMillis()
+        val startRotation = marker.rotation
+        val duration: Long = 200
+        val interpolator = LinearInterpolator()
+
+        stopPreviousRotationInterpolation.set(true)
+
+        fun interpolate(stopInterpolation: AtomicBoolean): Runnable {
+            return object : Runnable {
+                override fun run() {
+                    isRotating = true
+                    val elapsed = SystemClock.uptimeMillis() - start
+                    val t: Float = interpolator.getInterpolation(elapsed.toFloat() / duration)
+                    val rot = round(t * toRotation + (1 - t) * startRotation)
+                    marker.rotation = (if (-rot > 180) rot / 2 else rot)
+                    if (t < 1.0 && !stopInterpolation.get()) {
+                        handler.postDelayed(this, 16)
+                    }
+                }
+            }
+        }
+
+        stopPreviousRotationInterpolation = AtomicBoolean(false)
+        handler.post(interpolate(stopPreviousRotationInterpolation))
     }
 
     private fun startSensorObservers() {
@@ -498,6 +481,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         private const val DEFAULT_RADIUS_METERS = MAX_RADIUS_METERS / 10
         private const val OBSTACLE_ALARM_THRESHOLD_IN_SECONDS = 3
         private const val OBSTACLE_ALARM_THRESHOLD_IN_METERS = 150
+        private const val SCREEN_PADDING = 100
     }
 
 }
