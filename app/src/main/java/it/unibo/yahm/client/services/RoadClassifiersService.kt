@@ -43,8 +43,8 @@ class RoadClassifiersService(
 
         roadIssueDisposable = sensorCombiners.combineByTime(SENSING_INTERVAL)
             .observeOn(scheduler)
+            .filter {  it.location?.accuracy != null && it.location.accuracy < 10f}
             .buffer(WINDOW_LENGTH, (WINDOW_LENGTH * WINDOW_OVERLAP_PERCENTAGE).toInt())
-            .filter { values -> values.any { it.location != null }}
             .map { values ->
                 val inputBuffer = FloatArray(WINDOW_LENGTH * FEATURES_COUNT)
 
@@ -106,13 +106,12 @@ class RoadClassifiersService(
     }
 
     companion object {
-        private const val WINDOW_LENGTH = 96
-        private const val WINDOW_OVERLAP_PERCENTAGE = 0.3
+        private const val WINDOW_LENGTH = 128
+        private const val WINDOW_OVERLAP_PERCENTAGE = 0.2
         private const val FEATURES_COUNT = 6
         private const val SENSING_INTERVAL: Long = 20
         private const val QUALITY_BUFFER_SIZE = 20
         private const val MIN_STRETCH_LENGTH = 20.0
-        private const val RETRY_TIMES = 3L
     }
 
 }
