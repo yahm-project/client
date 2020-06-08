@@ -21,6 +21,7 @@ import it.unibo.yahm.client.sensors.SensorCombiners
 import it.unibo.yahm.client.sensors.SensorType
 import it.unibo.yahm.client.utils.CsvFile
 import it.unibo.yahm.client.utils.FunctionUtils.median
+import it.unibo.yahm.client.utils.ScreenUtils
 import java.util.concurrent.TimeUnit
 
 
@@ -208,10 +209,12 @@ class TrainingActivity : AppCompatActivity() {
             if (isMeasuring) {
                 Toast.makeText(applicationContext, "Stopped.", Toast.LENGTH_SHORT).show()
                 item.icon = getDrawable(R.drawable.ic_play_arrow_24dp)
+                ScreenUtils.setAlwaysOn(this, false)
                 stopCallback()
             } else {
                 Toast.makeText(applicationContext, "Started!", Toast.LENGTH_SHORT).show()
                 item.icon = getDrawable(R.drawable.ic_stop_24dp)
+                ScreenUtils.setAlwaysOn(this, true)
                 startCallback()
             }
             isMeasuring = !isMeasuring
