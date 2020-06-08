@@ -29,6 +29,7 @@ import it.unibo.yahm.client.entities.Quality
 import it.unibo.yahm.client.sensors.*
 import it.unibo.yahm.client.services.RetrofitService
 import it.unibo.yahm.client.services.RoadClassifiersService
+import it.unibo.yahm.client.utils.ScreenUtils
 import it.unibo.yahm.client.utils.CustomTileProvider
 import it.unibo.yahm.client.utils.DrawableUtils
 import it.unibo.yahm.client.utils.MapUtils
@@ -36,7 +37,6 @@ import it.unibo.yahm.client.utils.MapUtils.Companion.distBetween
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
-import kotlin.math.round
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -197,7 +197,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             spotFAB.setImageDrawable(getDrawable(R.drawable.ic_pan_tool_white_24dp))
             fetchNewData(carMarker!!.position, DEFAULT_RADIUS_METERS)
             roadClassifiersService.startService()
-
+            ScreenUtils.setAlwaysOn(this, true)
             spotting = true
         }
     }
@@ -212,7 +212,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             )
             spotFAB.setImageDrawable(getDrawable(R.drawable.ic_time_to_leave_white_24dp))
             roadClassifiersService.stopService()
-
+            ScreenUtils.setAlwaysOn(this, false)
             spotting = false
         }
 
