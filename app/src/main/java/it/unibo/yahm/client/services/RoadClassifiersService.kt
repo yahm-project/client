@@ -81,6 +81,7 @@ class RoadClassifiersService(
             .map(RoadQualityClassifier())
             .buffer(QUALITY_BUFFER_SIZE, QUALITY_BUFFER_SIZE - 1)
             .flatMap { buf ->
+                Log.d(javaClass.name, "Sending to server $QUALITY_BUFFER_SIZE legs..")
                 spotholeService.sendEvaluations(
                     Evaluations(
                         buf.map { it.position },
@@ -89,16 +90,11 @@ class RoadClassifiersService(
                         buf.take(QUALITY_BUFFER_SIZE - 1).map { it.quality },
                         obstacles
                     )
-                )
+                ).retry()
             }
-            .retry(RETRY_TIMES)
-            .subscribe({
-                Log.d(javaClass.name, "Make request to the server..")
-            }, {
-                Toast.makeText(context, "Failed to send evaluations to the server", Toast.LENGTH_SHORT).show()
-                it.printStackTrace()
-                stopService()
-            })
+            .subscribe {
+                Log.v(javaClass.name, "Request done")
+            }
     }
 
     fun stopService() {
