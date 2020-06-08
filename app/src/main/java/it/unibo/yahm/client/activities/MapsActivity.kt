@@ -34,6 +34,11 @@ import it.unibo.yahm.client.utils.CustomTileProvider
 import it.unibo.yahm.client.utils.DrawableUtils
 import it.unibo.yahm.client.utils.MapUtils
 import it.unibo.yahm.client.utils.MapUtils.Companion.distBetween
+import java.io.BufferedWriter
+import java.io.File
+import java.io.FileWriter
+import java.io.IOException
+import java.lang.Exception
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
@@ -60,7 +65,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var speedBumpMediaPlayer: MediaPlayer? = null
     private lateinit var roadClassifiersService: RoadClassifiersService
     private val screenSize = Point()
-
+    var bufferedWriter: BufferedWriter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,7 +77,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         spotFAB.setOnClickListener {
             toggleSpotService()
         }
-
         windowManager.defaultDisplay.getSize(screenSize)
     }
 
@@ -438,18 +442,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun startSensorObservers() {
+        bufferedWriter = this.openFileOutput("data.log", Context.MODE_PRIVATE).bufferedWriter() //TODO: REMOVE
         val locationObserver = reactiveLocation.observe().observeOn(AndroidSchedulers.mainThread())
         locationObserver
-                .filter { it.hasAccuracy() && it.accuracy < 100 && mapReady && carMarker != null}
+                .filter { it.hasAccuracy() && it.accuracy < 10f && mapReady && carMarker != null}
                 .subscribe {
                     val latLng = LatLng(it.latitude, it.longitude)
-                    if(it.hasAccuracy() && it.accuracy < 45f && !reactiveSensor.isDisposed(SensorType.ROTATION_VECTOR)){
+                    if(it.hasAccuracy() && it.accuracy < 30f && !reactiveSensor.isDisposed(SensorType.ROTATION_VECTOR)){
                         reactiveSensor.dispose(SensorType.ROTATION_VECTOR)
                     }
                     updateCarLocation(latLng)
                     signalObstacle(latLng, it.speed)
                     fetchNewDataIfIsNeeded(latLng)
                 }
+
+        locationObserver.subscribe{
+            bufferedWriter!!.write("accuracy: ${it.accuracy}, velocity: ${it.speed}\n") //TODO: REMOVE
+        }
 
         locationObserver
                 .filter { it.hasAccuracy() && it.accuracy < 50 && mapReady }
@@ -479,6 +488,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun stopSensorObservers() {
+        bufferedWriter!!.close() //TODO: REMOVE
         reactiveLocation.dispose()
         if(!reactiveSensor.isDisposed(SensorType.ROTATION_VECTOR)){
             reactiveSensor.dispose(SensorType.ROTATION_VECTOR)
