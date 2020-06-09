@@ -8,6 +8,7 @@ import java.util.*
 import kotlin.math.*
 
 class MapUtils {
+
     companion object {
         private const val EARTH_RADIUS = 3958.75
         private const val METER_CONVERSION = 1609
@@ -28,18 +29,6 @@ class MapUtils {
 
             return (dist * METER_CONVERSION).toFloat()
         }
-
-        /* Get segment's bearing the user is navigating */
-        fun getBearingForSegment(begin: LatLng, end: LatLng): Float {
-            val dLon = end.longitude - begin.longitude
-            val x = sin(Math.toRadians(dLon)) * cos(Math.toRadians(end.latitude))
-            val y = (cos(Math.toRadians(begin.latitude)) * sin(Math.toRadians(end.latitude))
-                    - sin(Math.toRadians(begin.latitude)) * cos(Math.toRadians(end.latitude))
-                    * cos(Math.toRadians(dLon)))
-            val bearing = Math.toDegrees(atan2(x, y))
-            return bearing.toFloat()
-        }
-
 
         fun getVisibleRadius(visibleRegion: VisibleRegion): Float {
             val diagonalDistance = FloatArray(1)
@@ -62,4 +51,5 @@ class MapUtils {
             return if (rotationDelta > 180.0f) (360.0f - rotationDelta) else rotationDelta
         }
     }
+
 }

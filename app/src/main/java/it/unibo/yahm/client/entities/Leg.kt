@@ -1,5 +1,8 @@
 package it.unibo.yahm.client.entities
 
+import kotlin.math.max
+import kotlin.math.min
+
 data class Leg(
     val from: Node,
     val to: Node,
@@ -12,15 +15,13 @@ data class Leg(
 
         other as Leg
 
-        if (from != other.from) return false
-        if (to != other.to) return false
+        if (max(from.id, to.id) != max(other.from.id, other.to.id)) return false
+        if (min(from.id, to.id) != min(other.from.id, other.to.id)) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = from.hashCode()
-        result = 31 * result + to.hashCode()
-        return result
+        return (31 * max(from.id, to.id) + min(from.id, to.id)).toInt()
     }
 }
