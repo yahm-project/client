@@ -38,10 +38,10 @@ class RoadQualityClassifier : Function<CombinedValues, StretchQuality> {
     }
 
     companion object {
-        const val PERFECT_THRESHOLD = 1.2
-        const val GOOD_THRESHOLD = 2.2
-        const val MEDIUM_THRESHOLD = 3.2
-        const val BAD_THRESHOLD = 4.2
+        const val PERFECT_THRESHOLD = 0.7
+        const val GOOD_THRESHOLD = 1.7
+        const val MEDIUM_THRESHOLD = 2.7
+        const val BAD_THRESHOLD = 3.7
         const val DEFAULT_ACCURACY = 100.0
     }
 

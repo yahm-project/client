@@ -45,11 +45,16 @@ class RoadIssueClassifier(context: Context) {
         interpreter.run(inputBuffer.buffer, outputBuffer.buffer.rewind())
 
         val labeledProbability =
-            TensorLabel(labels, probabilityProcessor.process(outputBuffer)).mapWithFloatValue
+                TensorLabel(labels, probabilityProcessor.process(outputBuffer)).mapWithFloatValue
 
         Log.d(javaClass.name, "Results: $labeledProbability")
 
-        return ObstacleType.valueOf(labeledProbability.maxBy { it.value }!!.key)
+        val obstacleTypeByMaxProbability = labeledProbability.maxBy { it.value }!!
+        val toReturnObstacle = if (obstacleTypeByMaxProbability.value > PROBABILITY_THRESHOLD)
+            obstacleTypeByMaxProbability.key
+        else
+            "NOTHING"
+        return ObstacleType.valueOf(toReturnObstacle)
     }
 
     companion object {
@@ -57,6 +62,7 @@ class RoadIssueClassifier(context: Context) {
         private const val LABELS_FILENAME = "labels.txt"
         private const val PROBABILITY_MEAN = 0.0f
         private const val PROBABILITY_STD = 1.0f
+        private const val PROBABILITY_THRESHOLD = 0.80f
     }
 
 }
