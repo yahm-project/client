@@ -39,9 +39,8 @@ class TimedLocationSubscriber(gpsObservable: Observable<Location>, maxQueueSize:
         var firstLocation = queue.pollFirst()
         while (firstLocation != null) {
             val nextLocation = queue.peekFirst()
-            if (nextLocation == null ||
-                abs(firstLocation.time) - timestamp < abs(nextLocation.time - timestamp)
-            ) {
+
+            if (nextLocation == null || abs(firstLocation.time) - timestamp < abs(nextLocation.time - timestamp)) {
                 lastLocation = firstLocation
                 return firstLocation
             }

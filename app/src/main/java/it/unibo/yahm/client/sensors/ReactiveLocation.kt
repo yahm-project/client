@@ -17,8 +17,7 @@ class ReactiveLocation(
     private val minTime: Long = 100
 ) {
 
-    private var locationManager =
-        context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    private var locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     private var publishSubject: PublishSubject<Location>? = null
     private var gpsListener: LocationListener? = null
     private var networkListener: LocationListener? = null
@@ -56,29 +55,15 @@ class ReactiveLocation(
             }
         }
 
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
-            != PackageManager.PERMISSION_GRANTED
-        ) {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) !=
+            PackageManager.PERMISSION_GRANTED) {
             throw IllegalAccessError()
         }
 
         gpsListener = listenerCreator()
-        locationManager.requestLocationUpdates(
-            LocationManager.GPS_PROVIDER,
-            minTime,
-            minDistance,
-            gpsListener!!
-        )
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, minTime, minDistance, gpsListener!!)
         networkListener = listenerCreator()
-        locationManager.requestLocationUpdates(
-            LocationManager.NETWORK_PROVIDER,
-            minTime,
-            minDistance,
-            networkListener!!
-        )
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, minTime, minDistance, networkListener!!)
 
         return subject
     }

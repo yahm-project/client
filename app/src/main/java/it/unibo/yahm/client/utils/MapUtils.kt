@@ -2,10 +2,9 @@ package it.unibo.yahm.client.utils
 
 import android.location.Location
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.VisibleRegion
-import java.util.*
 import kotlin.math.*
+
 
 class MapUtils {
 
@@ -14,10 +13,7 @@ class MapUtils {
         private const val METER_CONVERSION = 1609
 
         /** distance in meters  */
-        fun distBetween(
-            pointA: LatLng,
-            pointB: LatLng
-        ): Float {
+        fun distBetween(pointA: LatLng, pointB: LatLng): Float {
             val dLat = Math.toRadians(pointB.latitude - pointA.latitude)
             val dLng = Math.toRadians(pointB.longitude - pointA.longitude)
             val a = (sin(dLat / 2) * sin(dLat / 2)

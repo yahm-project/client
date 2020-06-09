@@ -7,6 +7,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 
 abstract class DrawableUtils {
+
     companion object {
         fun getMarkerIconFromDrawable(drawable: Drawable): BitmapDescriptor? {
             val canvas = Canvas()
@@ -21,4 +22,6 @@ abstract class DrawableUtils {
             return BitmapDescriptorFactory.fromBitmap(bitmap)
         }
     }
+
 }
+

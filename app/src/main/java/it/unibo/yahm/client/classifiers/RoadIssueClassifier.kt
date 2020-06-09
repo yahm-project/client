@@ -19,6 +19,8 @@ class RoadIssueClassifier(context: Context) {
     private val labels: List<String>
     private val probabilityProcessor: TensorProcessor
 
+    val inputShape: IntArray
+
     init {
         val options = Interpreter.Options()
         options.setNumThreads(1)
@@ -28,6 +30,7 @@ class RoadIssueClassifier(context: Context) {
 
         val inputTensor = interpreter.getInputTensor(0)
         val outputTensor = interpreter.getOutputTensor(0)
+        inputShape = inputTensor.shape()
         inputBuffer = TensorBuffer.createFixedSize(inputTensor.shape(), inputTensor.dataType())
         outputBuffer = TensorBuffer.createFixedSize(outputTensor.shape(), outputTensor.dataType())
 
@@ -44,7 +47,7 @@ class RoadIssueClassifier(context: Context) {
         val labeledProbability =
             TensorLabel(labels, probabilityProcessor.process(outputBuffer)).mapWithFloatValue
 
-        Log.d("RoadIssueClassifier", "Results: $labeledProbability")
+        Log.d(javaClass.name, "Results: $labeledProbability")
 
         return ObstacleType.valueOf(labeledProbability.maxBy { it.value }!!.key)
     }

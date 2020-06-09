@@ -22,7 +22,7 @@ import it.unibo.yahm.client.utils.FunctionUtils.median
 
 
 class RoadClassifiersService(
-    private val context: Context,
+    context: Context,
     reactiveSensor: ReactiveSensor,
     reactiveLocation: ReactiveLocation,
     private val spotholeService: SpotholeService
