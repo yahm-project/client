@@ -49,6 +49,9 @@ data class GpsLocation(
     }
 }
 
+/**
+ * Represents the combined values of accelerometer, gyroscope and gps
+ */
 data class CombinedValues(
     val accelerationValues: List<Acceleration>,
     val gyroscopeValues: List<AngularVelocity>,

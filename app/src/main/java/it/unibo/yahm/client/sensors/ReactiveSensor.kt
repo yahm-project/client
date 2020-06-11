@@ -9,7 +9,11 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.subjects.PublishSubject
 import java.util.*
 
-
+/**
+ * Represents a generic reactive sensor (ex. Accelerometer or gyroscope)
+ *
+ * @param context the activity context
+ */
 class ReactiveSensor(context: Context) {
 
     private val listeners = EnumMap<SensorType, SensorEventListener>(SensorType::class.java)
@@ -18,6 +22,12 @@ class ReactiveSensor(context: Context) {
     private val sensorManager: SensorManager =
         context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
+    /**
+     * Allows the observation of a specific sensor
+     *
+     * @param sensorType the type of sensor to observe
+     * @return The sensor data's observables
+     */
     @Synchronized
     fun observer(sensorType: SensorType): Observable<SensorEvent> =
         if (publishSubjects.containsKey(sensorType)) {
@@ -50,6 +60,11 @@ class ReactiveSensor(context: Context) {
         return subject
     }
 
+    /**
+     * Dispose the observable for a specific sensor type
+     *
+     * @param sensorType the type of sensor to dispose
+     */
     fun dispose(sensorType: SensorType) {
         if (!listeners.containsKey(sensorType)) {
             throw IllegalStateException("No listener for type $sensorType")

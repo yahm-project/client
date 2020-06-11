@@ -8,6 +8,9 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
 
+/**
+ * Interface for Retrofit Service
+ */
 interface SpotholeService {
 
     @POST("roads/evaluations")
@@ -18,10 +21,5 @@ interface SpotholeService {
                                            @Query("longitude") longitude: Double,
                                            @Query("radius") radius: Float
     ): Observable<List<Leg>>
-
-    @GET("roads/evaluations/")
-    fun loadEvaluations(@Query("latitude") latitude: Double,
-                                        @Query("longitude") longitude: Double,
-                                        @Query("radius") radius: Float): Observable<List<Leg>>
 
 }

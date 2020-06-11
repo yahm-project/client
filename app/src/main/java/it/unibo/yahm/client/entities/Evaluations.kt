@@ -1,5 +1,9 @@
 package it.unibo.yahm.client.entities
 
+
+/**
+ * Represents the evaluations data to be sended to the server
+ */
 data class Evaluations(
     val coordinates: List<Coordinate>,
     val timestamps: List<Long>,

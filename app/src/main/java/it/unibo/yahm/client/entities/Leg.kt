@@ -3,6 +3,9 @@ package it.unibo.yahm.client.entities
 import kotlin.math.max
 import kotlin.math.min
 
+/**
+ * Represents the connection leg between nodes
+ */
 data class Leg(
     val from: Node,
     val to: Node,

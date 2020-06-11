@@ -6,6 +6,9 @@ import it.unibo.yahm.client.entities.Quality
 import it.unibo.yahm.client.sensors.CombinedValues
 import it.unibo.yahm.client.sensors.StretchQuality
 
+/**
+ * Fake quality classifier useful to do some tests
+ */
 
 class FakeQualityClassifier : Function<CombinedValues, StretchQuality> {
 

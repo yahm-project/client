@@ -24,7 +24,10 @@ import it.unibo.yahm.client.utils.FunctionUtils.median
 import it.unibo.yahm.client.utils.ScreenUtils
 import java.util.concurrent.TimeUnit
 
-
+/**
+ * Provides data's collection and labelling functionalities. It saves sensor data in a csv file and
+ * obstacle label (obstacles need to be spotted by a user) in another csv file.
+ */
 class TrainingActivity : AppCompatActivity() {
 
     private var isMeasuring = false

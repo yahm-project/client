@@ -20,7 +20,14 @@ import it.unibo.yahm.client.sensors.ReactiveSensor
 import it.unibo.yahm.client.sensors.SensorCombiners
 import it.unibo.yahm.client.utils.FunctionUtils.median
 
-
+/**
+ * Provides functionalities useful to classify road quality and road issues.
+ *
+ * @param context the activity context
+ * @param reactiveLocation the gps reactive data
+ * @param reactiveSensor the accelerometer and gyroscope reactive data
+ * @param spotholeService the service for communicate with backend
+ */
 class RoadClassifiersService(
     context: Context,
     reactiveSensor: ReactiveSensor,

@@ -15,7 +15,10 @@ import it.unibo.yahm.client.services.RetrofitService
 import it.unibo.yahm.client.services.RoadClassifiersService
 import it.unibo.yahm.client.utils.CsvFile
 
-
+/**
+ * Provides a simulation functionality. Useful to test communication between client and server
+ * and part of functionalities of this latter.
+ */
 class SimulationActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

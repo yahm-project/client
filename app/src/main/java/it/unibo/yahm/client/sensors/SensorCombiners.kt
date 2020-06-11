@@ -10,7 +10,9 @@ import io.reactivex.rxjava3.subjects.PublishSubject
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
-
+/**
+ * Combines reactive sensor data into a single stream
+ */
 class SensorCombiners(reactiveLocation: ReactiveLocation, reactiveSensor: ReactiveSensor) {
 
     private val accelerometerObservable = reactiveSensor.observer(SensorType.LINEAR_ACCELERATION)
@@ -18,6 +20,12 @@ class SensorCombiners(reactiveLocation: ReactiveLocation, reactiveSensor: Reacti
     private val gpsObservable = reactiveLocation.observe()
 
 
+    /**
+     * Combine sensor data by length
+     *
+     * @param minStretchLength the length threshold
+     * @return an observable of combined data
+     */
     fun combineByStretchLength(minStretchLength: Double = 20.0): Observable<CombinedValues> {
         val subject = PublishSubject.create<CombinedValues>()
         val thread = Schedulers.newThread()
@@ -70,6 +78,13 @@ class SensorCombiners(reactiveLocation: ReactiveLocation, reactiveSensor: Reacti
         }
     }
 
+    /**
+     * Combine sensor data by time
+     *
+     * @param timeSpan the time threshold
+     * @param timeSkip the period of time after which a new buffer will be created
+     * @return an observable of combined data
+     */
     fun combineByTime(timeSpan: Long = 20, timeSkip: Long? = null): Observable<CombinedValues> {
         val thread = Schedulers.newThread()
         val timedLocationSubscriber = TimedLocationSubscriber(gpsObservable)

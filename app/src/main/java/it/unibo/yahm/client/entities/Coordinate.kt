@@ -4,7 +4,9 @@ import com.google.android.gms.maps.model.LatLng
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-
+/**
+ * Representation of geographical coordinate.
+ */
 data class Coordinate(
     val latitude: Double,
     val longitude: Double

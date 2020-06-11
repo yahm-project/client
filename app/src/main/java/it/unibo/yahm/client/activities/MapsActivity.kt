@@ -36,6 +36,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
 
 
+/**
+ * Provides application's core functionalities. It classifies sensor's data and send results to
+ * the server. It requires data to the server in order to display information.
+ */
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
@@ -44,7 +48,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var obstaclesCache: LruCache<Obstacle, Boolean> = LruCache(MAX_CACHE_SIZE)
     private lateinit var reactiveSensor: ReactiveSensor
     private lateinit var reactiveLocation: ReactiveLocation
-    private lateinit var sensorCombiners: SensorCombiners
     private var currentCameraBearing = 0f
     private lateinit var spotFAB: FloatingActionButton
     private var spotting = false
@@ -156,7 +159,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun initServices() {
         reactiveSensor = ReactiveSensor(applicationContext)
         reactiveLocation = ReactiveLocation(applicationContext)
-        sensorCombiners = SensorCombiners(reactiveLocation, reactiveSensor)
         backendService = RetrofitService(applicationContext).spotholeService
         roadClassifiersService = RoadClassifiersService(applicationContext, reactiveSensor, reactiveLocation, backendService)
     }

@@ -10,7 +10,9 @@ import org.tensorflow.lite.support.common.ops.NormalizeOp
 import org.tensorflow.lite.support.label.TensorLabel
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 
-
+/**
+ * Uses neural network in order to spot road issue
+ */
 class RoadIssueClassifier(context: Context) {
 
     private val interpreter: Interpreter

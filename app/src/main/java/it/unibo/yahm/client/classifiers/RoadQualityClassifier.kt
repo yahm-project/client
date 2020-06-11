@@ -7,7 +7,9 @@ import it.unibo.yahm.client.sensors.CombinedValues
 import it.unibo.yahm.client.sensors.StretchQuality
 import kotlin.math.abs
 
-
+/**
+ * Implements z-diff algorithm in order to classify road quality
+ */
 class RoadQualityClassifier : Function<CombinedValues, StretchQuality> {
 
     override fun apply(t: CombinedValues): StretchQuality {

@@ -11,7 +11,12 @@ import androidx.core.app.ActivityCompat
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.subjects.PublishSubject
 
-
+/**
+ * It provides GPS data in reactive way
+ *
+ * @param context the activity context
+ * @param minTime min time between emitted data
+ */
 class ReactiveLocation(
     private val context: Context, private val minDistance: Float = 0.0f,
     private val minTime: Long = 100
@@ -22,6 +27,11 @@ class ReactiveLocation(
     private var gpsListener: LocationListener? = null
     private var networkListener: LocationListener? = null
 
+    /**
+     * Allows the observation of GPS data
+     *
+     * @return The location data's observables
+     */
     @Synchronized
     fun observe(): Observable<Location> {
         if (publishSubject == null) {
@@ -68,6 +78,9 @@ class ReactiveLocation(
         return subject
     }
 
+    /**
+     * Dispose the observable for location data
+     */
     @Synchronized
     fun dispose() {
         if (gpsListener != null) {
