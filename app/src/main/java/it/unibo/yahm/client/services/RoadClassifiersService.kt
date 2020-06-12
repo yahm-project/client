@@ -95,7 +95,7 @@ class RoadClassifiersService(
                         buf.map { it.timestamp / 1000 }, // timestamp must be in seconds
                         buf.map { it.radius },
                         buf.take(QUALITY_BUFFER_SIZE - 1).map { it.quality },
-                        obstacles
+                        obstacles.distinct()
                     )
                 ).retry()
             }

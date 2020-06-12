@@ -68,7 +68,7 @@ class SimulationActivity : AppCompatActivity() {
             stopSavingStretches.isEnabled = false
 
             reactiveLocation.dispose()
-            reactiveSensor.dispose(SensorType.ACCELEROMETER)
+            reactiveSensor.dispose(SensorType.LINEAR_ACCELERATION)
             reactiveSensor.dispose(SensorType.GYROSCOPE)
             csvFile.close()
         }

@@ -33,7 +33,7 @@ data class Coordinate(
     }
 
     private fun Double.hash(): Int {
-        return (this * 10f.pow(6)).roundToInt()
+        return (this * 10f.pow(5)).roundToInt()
     }
 
 }
