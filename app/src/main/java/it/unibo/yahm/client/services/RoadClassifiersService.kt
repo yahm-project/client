@@ -51,7 +51,7 @@ class RoadClassifiersService(
         roadIssueDisposable = sensorCombiners.combineByTime(SENSING_INTERVAL)
             .observeOn(scheduler)
             .filter {  it.location?.accuracy != null && it.location.accuracy < 10f}
-            .buffer(WINDOW_LENGTH, (WINDOW_LENGTH * WINDOW_OVERLAP_PERCENTAGE).toInt())
+            .buffer(WINDOW_LENGTH, (WINDOW_LENGTH * (1 - WINDOW_OVERLAP_PERCENTAGE)).toInt())
             .map { values ->
                 val inputBuffer = FloatArray(WINDOW_LENGTH * FEATURES_COUNT)
 
