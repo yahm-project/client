@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="spothole_service_development_baseurl">https://backend.yahm.eciavatta.it/</string>
+    <string name="spothole_service_production_baseurl">https://backend.yahm.eciavatta.it/</string>
+</resources>

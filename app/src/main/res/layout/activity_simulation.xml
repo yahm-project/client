@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <include layout="@layout/toolbar" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true">
+                <Button
+                    android:id="@+id/btnStartSavingStretches"
+                    android:layout_width="160dp"
+                    android:layout_height="96dp"
+                    android:text="Start saving\n stretches"
+                    android:textSize="12sp"
+                    android:layout_alignParentStart="true"/>
+
+                <Button
+                    android:id="@+id/btnStopSavingStretches"
+                    android:layout_width="160dp"
+                    android:layout_height="96dp"
+                    android:enabled="false"
+                    android:text="Stop saving\n stretces"
+                    android:textSize="12sp"
+                    android:layout_marginLeft="5dp"
+                    android:layout_toRightOf="@id/btnStartSendingStretches"
+                    />
+
+                <Button
+                    android:id="@+id/btnStartSendingStretches"
+                    android:layout_width="160dp"
+                    android:layout_height="96dp"
+                    android:text="Start sending\n stretches"
+                    android:textSize="12sp"
+                    android:layout_below="@id/btnStartSavingStretches"
+                    />
+
+                <Button
+                    android:id="@+id/btnStopSendingStretches"
+                    android:layout_width="160dp"
+                    android:layout_height="96dp"
+                    android:enabled="false"
+                    android:text="Stop sending\n stretches"
+                    android:textSize="12sp"
+                    android:layout_marginLeft="5dp"
+                    android:layout_below="@id/btnStopSavingStretches"
+                    android:layout_toRightOf="@id/btnStartSendingStretches"/>
+
+                <Button
+                    android:id="@+id/btnTestClassifier"
+                    android:layout_width="325dp"
+                    android:layout_height="96dp"
+                    android:text="Test Classifier"
+                    android:layout_centerHorizontal="true"
+                    android:layout_below="@id/btnStartSendingStretches"/>
+
+            </RelativeLayout>
+        </RelativeLayout>
+
+
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
