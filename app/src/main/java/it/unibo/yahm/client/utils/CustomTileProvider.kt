@@ -13,6 +13,6 @@ class CustomTileProvider(val width: Int = 512, val height: Int = 512) : UrlTileP
 
     companion object {
         private const val MAPBOX_TOKEN =
-            "pk.eyJ1IjoiZ2lhY29tb3RvbnRpbmkiLCJhIjoiY2s5Y3h0d2hxMDNjYjNtcGxmYTA3dnYzMSJ9.EoujETnFYtRxAox-ne97mQ"
+            "pk.eyJ1IjoiY3JhZnRvbmkiLCJhIjoiY2tiamF2ZmVkMG5mbTJ4bWI2ZnB3MnhlcCJ9.0uMfR2ze3WOhl_lYKvzrLQ"
     }
 }
