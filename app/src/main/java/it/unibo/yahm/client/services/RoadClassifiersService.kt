@@ -29,10 +29,10 @@ import it.unibo.yahm.client.utils.FunctionUtils.median
  * @param spotholeService the service for communicate with backend
  */
 class RoadClassifiersService(
-    context: Context,
-    reactiveSensor: ReactiveSensor,
-    reactiveLocation: ReactiveLocation,
-    private val spotholeService: SpotholeService
+        context: Context,
+        reactiveSensor: ReactiveSensor,
+        reactiveLocation: ReactiveLocation,
+        private val spotholeService: SpotholeService
 ) {
 
     private val roadIssueClassifier = RoadIssueClassifier(context)
@@ -49,59 +49,60 @@ class RoadClassifiersService(
         Log.d(javaClass.name, "Starting service..")
 
         roadIssueDisposable = sensorCombiners.combineByTime(SENSING_INTERVAL)
-            .observeOn(scheduler)
-            .filter {  it.location?.accuracy != null && it.location.accuracy < 10f}
-            .buffer(WINDOW_LENGTH, (WINDOW_LENGTH * (1 - WINDOW_OVERLAP_PERCENTAGE)).toInt())
-            .map { values ->
-                val inputBuffer = FloatArray(WINDOW_LENGTH * FEATURES_COUNT)
+                .observeOn(scheduler)
+                .filter { it.location?.accuracy != null && it.location.accuracy < 10f }
+                .buffer(WINDOW_LENGTH, (WINDOW_LENGTH * (1 - WINDOW_OVERLAP_PERCENTAGE)).toInt())
+                .map { values ->
+                    val inputBuffer = FloatArray(WINDOW_LENGTH * FEATURES_COUNT)
 
-                values.forEachIndexed { i, cv ->
-                    inputBuffer[i * FEATURES_COUNT] =
-                        cv.accelerationValues.map { it.x }.median().toFloat()
-                    inputBuffer[i * FEATURES_COUNT + 1] =
-                        cv.accelerationValues.map { it.y }.median().toFloat()
-                    inputBuffer[i * FEATURES_COUNT + 2] =
-                        cv.accelerationValues.map { it.z }.median().toFloat()
-                    inputBuffer[i * FEATURES_COUNT + 3] =
-                        cv.gyroscopeValues.map { it.x }.median().toFloat()
-                    inputBuffer[i * FEATURES_COUNT + 4] =
-                        cv.gyroscopeValues.map { it.y }.median().toFloat()
-                    inputBuffer[i * FEATURES_COUNT + 5] =
-                        cv.gyroscopeValues.map { it.z }.median().toFloat()
-                }
-                val location = values.first { it.location != null }.location!!
-                Obstacle(
-                    Coordinate(location.latitude, location.longitude),
-                    roadIssueClassifier.classify(inputBuffer)
-                )
-            }.filter { it.obstacleType != ObstacleType.NOTHING }
-            .subscribeOn(scheduler)
-            .subscribe ({
-                obstacles.add(it)
-            }, {
-                Log.e("RoadClassifierService", "Failed to classify road obstacles")
-                it.printStackTrace()
-            })
+                    values.forEachIndexed { i, cv ->
+                        inputBuffer[i * FEATURES_COUNT] =
+                                cv.accelerationValues.map { it.x }.median().toFloat()
+                        inputBuffer[i * FEATURES_COUNT + 1] =
+                                cv.accelerationValues.map { it.y }.median().toFloat()
+                        inputBuffer[i * FEATURES_COUNT + 2] =
+                                cv.accelerationValues.map { it.z }.median().toFloat()
+                        inputBuffer[i * FEATURES_COUNT + 3] =
+                                cv.gyroscopeValues.map { it.x }.median().toFloat()
+                        inputBuffer[i * FEATURES_COUNT + 4] =
+                                cv.gyroscopeValues.map { it.y }.median().toFloat()
+                        inputBuffer[i * FEATURES_COUNT + 5] =
+                                cv.gyroscopeValues.map { it.z }.median().toFloat()
+                    }
+                    val location = values.first { it.location != null }.location!!
+                    Obstacle(
+                            Coordinate(location.latitude, location.longitude),
+                            roadIssueClassifier.classify(inputBuffer)
+                    )
+                }.filter { it.obstacleType != ObstacleType.NOTHING }
+                .subscribeOn(scheduler)
+                .subscribe({
+                    obstacles.add(it)
+                }, {
+                    Log.e("RoadClassifierService", "Failed to classify road obstacles")
+                    it.printStackTrace()
+                })
 
         roadQualityDisposable = sensorCombiners.combineByStretchLength(MIN_STRETCH_LENGTH)
-            .observeOn(scheduler)
-            .map(RoadQualityClassifier())
-            .buffer(QUALITY_BUFFER_SIZE, QUALITY_BUFFER_SIZE - 1)
-            .flatMap { buf ->
-                Log.d(javaClass.name, "Sending to server $QUALITY_BUFFER_SIZE legs..")
-                spotholeService.sendEvaluations(
-                    Evaluations(
-                        buf.map { it.position },
-                        buf.map { it.timestamp / 1000 }, // timestamp must be in seconds
-                        buf.map { it.radius },
-                        buf.take(QUALITY_BUFFER_SIZE - 1).map { it.quality },
-                        obstacles.distinct()
-                    )
-                ).retry()
-            }
-            .subscribe {
-                Log.v(javaClass.name, "Request done")
-            }
+                .observeOn(scheduler)
+                .filter { it.location?.accuracy != null && it.location.accuracy < 10f }
+                .map(RoadQualityClassifier())
+                .buffer(QUALITY_BUFFER_SIZE, QUALITY_BUFFER_SIZE - 1)
+                .flatMap { buf ->
+                    Log.d(javaClass.name, "Sending to server $QUALITY_BUFFER_SIZE legs..")
+                    spotholeService.sendEvaluations(
+                            Evaluations(
+                                    buf.map { it.position },
+                                    buf.map { it.timestamp / 1000 }, // timestamp must be in seconds
+                                    buf.map { it.radius },
+                                    buf.take(QUALITY_BUFFER_SIZE - 1).map { it.quality },
+                                    obstacles.distinct()
+                            )
+                    ).retry()
+                }
+                .subscribe {
+                    Log.v(javaClass.name, "Request done")
+                }
     }
 
     fun stopService() {
