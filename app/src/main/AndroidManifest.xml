@@ -9,14 +9,25 @@
 
     <application
         android:allowBackup="true"
+        android:fontFamily="@font/beauty_and_beast"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:fontFamily="@font/beauty_and_beast"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
 
+        <activity android:name=".client.activities.TestActivity"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name="jaca.android.JaCaService"
+            android:exported="false" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -30,30 +41,22 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name="it.unibo.yahm.client.activities.MapsActivity"
-            android:screenOrientation="nosensor"
-            android:label="@string/title_activity_maps" />
-
+            android:name=".client.activities.MapsActivity"
+            android:label="@string/title_activity_maps"
+            android:screenOrientation="nosensor" />
         <activity
-            android:name="it.unibo.yahm.client.activities.SimulationActivity"
-            android:screenOrientation="nosensor"
-            android:label="@string/title_activity_simulation" />
-
+            android:name=".client.activities.SimulationActivity"
+            android:label="@string/title_activity_simulation"
+            android:screenOrientation="nosensor" />
         <activity
-            android:name="it.unibo.yahm.client.activities.MainActivity"
+            android:name=".client.activities.MainActivity"
             android:label="[YAHM]"
             android:screenOrientation="nosensor">
-                <intent-filter>
-                    <action android:name="android.intent.action.MAIN" />
-                    <category android:name="android.intent.category.LAUNCHER" />
-                </intent-filter>
         </activity>
-
         <activity
-            android:name="it.unibo.yahm.client.activities.TrainingActivity"
-            android:screenOrientation="nosensor"
-            android:label="@string/title_activity_training" />
-
+            android:name=".client.activities.TrainingActivity"
+            android:label="@string/title_activity_training"
+            android:screenOrientation="nosensor" />
     </application>
 
 </manifest>

@@ -35,6 +35,9 @@ android {
     aaptOptions {
         noCompress "tflite"
     }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
 
 }
 
@@ -67,6 +70,13 @@ dependencies {
     implementation 'org.tensorflow:tensorflow-lite:2.2.0'
     implementation 'org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly'
     implementation 'org.tensorflow:tensorflow-lite-support:0.0.0-nightly'
+    implementation files('libs/jason.jar')
+    implementation files('libs/c4jason.jar')
+    implementation files('libs/cartago-jaca-android.jar')
+    implementation files('libs/jaca-android.jar')
+    implementation files('libs/lipermi-0.4.jar')
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.1.0'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.1.0'
 
     androidTestImplementation 'com.android.support:support-annotations:28.0.0'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'

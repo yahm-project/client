@@ -15,7 +15,7 @@
     <string name="fab_spot">Start spotting</string>
     <string name="road_scan_started">Road scan started…</string>
     <string name="road_scan_stopped">Road scan stopped.</string>
-
+    <string name="mas2j">/it/unibo/yahm/client/project.mas2j</string>
 
     //Preferences keys
     <string name="VOLUME_STATE_KEY">VOLUME_STATE_KEY</string>

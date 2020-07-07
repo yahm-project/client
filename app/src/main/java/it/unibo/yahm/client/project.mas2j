@@ -1,0 +1,7 @@
+MAS activity_test {
+	infrastructure: Centralised
+    environment: c4jason.CartagoEnvironment("infrastructure")
+    agents:
+   		agent agentArchClass c4jason.CAgentArch;
+    aslSourcePath: "it/unibo/yahm/client/agents";
+}
