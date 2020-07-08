@@ -70,7 +70,7 @@ dependencies {
     implementation 'org.tensorflow:tensorflow-lite:2.2.0'
     implementation 'org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly'
     implementation 'org.tensorflow:tensorflow-lite-support:0.0.0-nightly'
-    
+
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     //Includes into the project the AAR availble into /libs
     implementation (name: 'jacaandroid-core-release', ext:'aar')
