@@ -17,17 +17,12 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
 
-        <activity android:name=".client.activities.TestActivity"
-            android:launchMode="singleTask">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+        <meta-data
+            android:name="mas2j"
+            android:value="/project.mas2j" />
 
-        <service
-            android:name="jaca.android.JaCaService"
-            android:exported="false" />
+        <service android:name="it.unibo.pslab.jaca_android.MasService" />
+
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -57,6 +52,24 @@
             android:name=".client.activities.TrainingActivity"
             android:label="@string/title_activity_training"
             android:screenOrientation="nosensor" />
+
+        <activity
+            android:name="it.unibo.pslab.jaca_android.LauncherActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="it.unibo.pslab.jaca_android.core.JaCaBaseActivity"
+            android:label="@string/app_name" />
+
+        <activity android:name=".client.activities.TestActivity$BohActivity"
+            android:launchMode="singleTask">
+        </activity>
+
     </application>
 
 </manifest>

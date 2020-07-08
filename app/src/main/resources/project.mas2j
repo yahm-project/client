@@ -1,0 +1,11 @@
+MAS smartnavigator{
+
+	infrastructure: Centralised
+
+    environment: jaca.CartagoEnvironment("infrastructure")
+
+    agents:
+        navigator_agent navigator_agent agentArchClass jaca.CAgentArch;
+
+    aslSourcePath: "agents";
+}
