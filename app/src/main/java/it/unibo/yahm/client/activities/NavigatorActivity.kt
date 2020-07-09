@@ -154,10 +154,10 @@ class NavigatorActivity : ActivityArtifact(), OnMapReadyCallback {
     }
 
     @OPERATION
-    fun updatePosition(gpsInfo: Optional<GpsLocation>) {
+    fun updatePosition(gpsInfo: GpsLocation) {
         Log.v("Agent", "NavigatorAgent send new position [$gpsInfo]")
-        if (mapReady && gpsInfo.isPresent) {
-            val gpsInformation = gpsInfo.get()
+        if (mapReady) {
+            val gpsInformation = gpsInfo
             val latLng = LatLng(gpsInformation.latitude, gpsInformation.longitude)
             if (carMarker == null) {
                 val circle =
@@ -177,6 +177,11 @@ class NavigatorActivity : ActivityArtifact(), OnMapReadyCallback {
                 execute { updateCarLocation(latLng) }
             }
             updateCameraLocation(latLng, 0f)
+            execute {
+                beginExternalSession()
+                updateObsProperty("actualRadius", MapUtils.getVisibleRadius(mMap.projection.visibleRegion))
+                endExternalSession(true)
+            }
         }
     }
 
@@ -216,6 +221,7 @@ class NavigatorActivity : ActivityArtifact(), OnMapReadyCallback {
             TileOverlayOptions().tileProvider(CustomTileProvider()).zIndex(-1f).fadeIn(true)
         )
         mapReady = true
+        defineObsProperty("actualRadius", MapUtils.getVisibleRadius(mMap.projection.visibleRegion))
     }
 
     companion object {
@@ -227,7 +233,6 @@ class NavigatorActivity : ActivityArtifact(), OnMapReadyCallback {
         private const val OBSTACLE_ALARM_THRESHOLD_IN_SECONDS = 3
         private const val OBSTACLE_ALARM_THRESHOLD_IN_METERS = 150
         private const val SCREEN_PADDING = 500
-        private const val MAX_CACHE_SIZE = 1024 * 1024
         private const val INTERPOLATE_INTERVAL = 16L
         private const val INTERPOLATE_DURATION = 1000
         private const val CAMERA_BEARING_THRESHOLD = 15f
