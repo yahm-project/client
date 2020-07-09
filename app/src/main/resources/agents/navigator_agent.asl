@@ -25,7 +25,8 @@
 +gpsInfo(Info) : lastPositionFetched(LastInfo) & radius(Radius)
     <- updatePosition(Info);
        -+pos(Info);
-       isNewDataNeeded(LastInfo, Info, Radius).
+       !checkIfNewDataIsNeeded;
+       !checkForAlarm.
 
 +actualRadius(Radius)
     <- -+radius(Radius).
@@ -33,9 +34,26 @@
 +fetch
     <- !fetchNewData.
 
-+!fetchNewData : pos(Info) & radius(Radius)
++!checkIfNewDataIsNeeded : lastPositionFetched(LastInfo) & radius(Radius) & pos(Info) & isSupportEnable(true)
+    <- isNewDataNeeded(LastInfo, Info, Radius).
+
++!fetchNewData : pos(Info) & radius(Radius) & isSupportEnable(true)
     <- -+lastPositionFetched(Info);
        updateConditions(Info,Radius).
 
++!checkForAlarm : pos(Info) & myobstacles(Obstacles) & isSupportEnable(true)
+    <- println(Obstacles)
+       checkAlarm(Obstacles, Info).
+
++alarmNeeded(ObstacleType)
+    <- emitAlarm(ObstacleType).
+
 +qualities(Qualities)
-    <- println(Qualities).
+    <- updateQualities(Qualities).
+
++obstacles(Obstacles)
+    <- -+myobstacles(Obstacles);
+        updateObstacles(Obstacles).
+
++isSupportEnable(IsEnabled)
+    <- -+isSupportEnable(IsEnabled).

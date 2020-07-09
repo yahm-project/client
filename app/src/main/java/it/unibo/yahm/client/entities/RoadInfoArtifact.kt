@@ -17,17 +17,18 @@ class RoadInfoArtifact : ServiceArtifact() {
 
     fun init() {
         backendService = RetrofitService(applicationContext).spotholeService
-        defineObsProperty("obstacles", legs)
-        defineObsProperty("qualities", obstacles)
+        defineObsProperty("obstacles", obstacles)
+        defineObsProperty("qualities", legs)
     }
 
     private fun fetchNewData(location: LatLng, radius: Double) {
+        legs.clear()
         backendService
                 .loadEvaluationsFromUserPerspective(location.latitude, location.longitude, radius.toFloat())
-                .blockingForEach {
-                    it.forEach { leg ->
+                .blockingForEach { legs ->
+                    legs.forEach { leg ->
                         if (legsCache.put(leg, System.currentTimeMillis()) == null) {
-                            legs.add(leg)
+                            this.legs.add(leg)
                         }
                         leg.obstacles.forEach { (obstacleType, obsCoordinateList) ->
                             obsCoordinateList.forEach {
@@ -45,8 +46,8 @@ class RoadInfoArtifact : ServiceArtifact() {
     @OPERATION
     fun updateConditions(location: GpsLocation, radius: Double) {
         fetchNewData(LatLng(location.latitude, location.longitude), (2 * radius).coerceAtMost(MAX_RADIUS_METERS))
-        updateObsProperty("obstacles", legs)
-        updateObsProperty("qualities", obstacles)
+        updateObsProperty("obstacles", obstacles)
+        updateObsProperty("qualities", legs)
 
     }
 
