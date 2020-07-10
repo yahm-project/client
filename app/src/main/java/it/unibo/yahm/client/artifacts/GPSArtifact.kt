@@ -15,6 +15,7 @@ import com.google.android.gms.maps.model.LatLng
 import it.unibo.pslab.jaca_android.core.ServiceArtifact
 import it.unibo.yahm.client.sensors.GpsLocation
 import it.unibo.yahm.client.utils.MapUtils
+import jason.asSemantics.DefaultInternalAction
 import java.text.FieldPosition
 import java.util.*
 import kotlin.math.sign
@@ -83,5 +84,4 @@ class GPSArtifact : ServiceArtifact() {
             networkListener = null
         }
     }
-
 }

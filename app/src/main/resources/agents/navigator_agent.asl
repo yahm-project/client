@@ -1,15 +1,15 @@
 !start.
 
 +!start
-	<-  makeArtifact("NavigatorGUI", "it.unibo.yahm.client.activities.NavigatorGUIArtifact",[],NavigatorActivity);
+	<-  makeArtifact("NavigatorGUI", "it.unibo.yahm.client.artifacts.NavigatorGUIArtifact",[],NavigatorActivity);
     	focus(NavigatorActivity).
 
 +!observeGPS
-    <-  makeArtifact("GPSArtifact", "it.unibo.yahm.client.entities.GPSArtifact",[],GPSArtifact);
+    <-  makeArtifact("GPSArtifact", "it.unibo.yahm.client.artifacts.GPSArtifact",[],GPSArtifact);
         focus(GPSArtifact).
 
 +!observeRoadInfo
-    <-  makeArtifact("RoadInfoArtifact", "it.unibo.yahm.client.entities.RoadInfoArtifact",[],RoadInfoArtifact);
+    <-  makeArtifact("RoadInfoArtifact", "it.unibo.yahm.client.artifacts.RoadInfoArtifact",[],RoadInfoArtifact);
         focus(RoadInfoArtifact).
 
 +ui_ready [artifact_name(Id,NavigatorActivity)]

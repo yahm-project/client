@@ -62,7 +62,7 @@
             </intent-filter>
         </activity>
         
-        <activity android:name=".client.activities.NavigatorActivity$NavigatorMain"
+        <activity android:name=".client.artifacts.NavigatorGUIArtifact$NavigatorActivity"
             android:launchMode="singleTask">
         </activity>
 
