@@ -1,11 +1,18 @@
 package it.unibo.yahm.client.activities
 
+import android.widget.Toast
+import it.unibo.yahm.client.utils.ScreenUtils
+
+import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.Point
 import android.media.MediaPlayer
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.animation.LinearInterpolator
 import androidx.core.content.ContextCompat
 import cartago.INTERNAL_OPERATION
@@ -14,9 +21,9 @@ import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.maps.android.SphericalUtil
+import it.unibo.yahm.R
 import it.unibo.pslab.jaca_android.core.ActivityArtifact
 import it.unibo.pslab.jaca_android.core.JaCaBaseActivity
-import it.unibo.yahm.R
 import it.unibo.yahm.client.entities.Leg
 import it.unibo.yahm.client.entities.Obstacle
 import it.unibo.yahm.client.entities.ObstacleType
@@ -27,7 +34,6 @@ import it.unibo.yahm.client.utils.DrawableUtils
 import it.unibo.yahm.client.utils.MapUtils
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
-
 
 class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
@@ -44,6 +50,7 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
     private lateinit var navigationSupportFAB: FloatingActionButton
     private var isSupportEnable = false
     private var wrappedActivity: NavigatorActivity? = null
+    private var isAudioOn = true
 
     class NavigatorActivity : JaCaBaseActivity() {
         fun loadMap(callback: OnMapReadyCallback) {
@@ -51,39 +58,72 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
                     callback
             )
         }
-        /*fun keepScreenOn() {
+
+        fun keepScreenOn() {
             ScreenUtils.setAlwaysOn(this, true)
         }
 
         fun disableKeepScreenOn() {
             ScreenUtils.setAlwaysOn(this, false)
-        }*/
+        }
     }
 
     fun init() {
         super.init(
                 NavigatorActivity::class.java,
-                R.layout.activity_maps,
+                R.layout.activity_navigator,
                 R.menu.maps_menu,
                 true
         )
     }
 
     @INTERNAL_OPERATION
+    fun onOptionsItemSelected(item: MenuItem): Boolean {
+        Log.d("Operation", "onOptionsItemSelected")
+        return when (item.itemId) {
+            R.id.toggleAudio -> {
+                toggleAudio()
+                setAudioSwitchTitle(item)
+                true
+            }
+            else -> false
+        }
+    }
+
+    @INTERNAL_OPERATION
+    fun onCreateOptionsMenu(menu: Menu): Boolean {
+        Log.d("Operation", "onCreateOptionsMenu")
+        setAudioSwitchTitle(menu.findItem(R.id.toggleAudio))
+        return true;
+    }
+
+    @INTERNAL_OPERATION
+    fun pauseOperation(){
+        Log.d("Operation", "onPause")
+        savePreferences(wrappedActivity)
+        releaseMediaPlayers()
+    }
+
+    @INTERNAL_OPERATION
     override fun setup() {
+        bindOnPauseEventToOp("pauseOperation")
+        bindOnCreateOptionsMenu("onCreateOptionsMenu")
+        bindOnOptionsItemSelectedToOp("onOptionsItemSelected")
         initUI()
-        initMediaPlayers()
     }
 
     private fun initUI() {
         execute {
             wrappedActivity = getActivity("NavigatorGUI") as NavigatorActivity
             wrappedActivity?.loadMap(this)
+            wrappedActivity?.setActionBar(findUIElement(R.id.my_toolbar) as android.widget.Toolbar)
         }
-      //  initFAB()
+        restorePreferences(wrappedActivity)
+        initMediaPlayers()
+        initFAB()
     }
 
-  /*  private fun initFAB() {
+    private fun initFAB() {
         execute {
             navigationSupportFAB = findUIElement(R.id.fab_spot) as FloatingActionButton
             navigationSupportFAB.setOnClickListener {
@@ -93,12 +133,61 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
                     startSpottingService()
                 }
                 isSupportEnable = !isSupportEnable
-                beginExternalSession()
+                /*beginExternalSession()
                 signal("isSupportEnable", isSupportEnable)
-                endExternalSession(true)
+                endExternalSession(true)*/
             }
         }
-        signal("isSupportEnable", isSupportEnable)
+        //signal("isSupportEnable", isSupportEnable)
+    }
+
+
+    private fun setAudioSwitchTitle(item: MenuItem) {
+        execute{
+            if (isAudioOn) {
+                item.title = "Audio on"
+            } else {
+                item.title = "Audio off"
+            }
+        }
+    }
+
+    private fun toggleAudio() {
+        if (isAudioOn) {
+            holeMediaPlayer?.setVolume(0f, 0f)
+            speedBumpMediaPlayer?.setVolume(0f, 0f)
+        } else {
+            holeMediaPlayer?.setVolume(1f, 1f)
+            speedBumpMediaPlayer?.setVolume(1f, 1f)
+        }
+        holeMediaPlayer?.seekTo(0)
+        speedBumpMediaPlayer?.seekTo(0)
+        isAudioOn = !isAudioOn
+    }
+
+    private fun restorePreferences(wrappedActivity: NavigatorActivity?) {
+        val sharedPreferences = wrappedActivity?.getPreferences(Context.MODE_PRIVATE) ?: return
+        isAudioOn = sharedPreferences.getBoolean(this.wrappedActivity!!.getString(R.string.VOLUME_STATE_KEY), true)
+        Log.d("sharedPreferences", "restored isAudioOn $isAudioOn")
+    }
+
+    private fun savePreferences(wrappedActivity: NavigatorActivity?) {
+        val sharedPreferences = wrappedActivity?.getPreferences(Context.MODE_PRIVATE) ?: return
+        with(sharedPreferences.edit()) {
+            putBoolean(wrappedActivity!!.getString(R.string.VOLUME_STATE_KEY), isAudioOn)
+            commit()
+        }
+        Log.d("sharedPreferences", "saved isAudioOn $isAudioOn")
+    }
+
+    private fun initMediaPlayers() {
+        holeMediaPlayer = MediaPlayer.create(applicationContext, R.raw.it_pothole_female)
+        speedBumpMediaPlayer = MediaPlayer.create(applicationContext, R.raw.it_speedbump_female)
+    }
+
+    private fun releaseMediaPlayers() {
+        holeMediaPlayer?.release()
+        speedBumpMediaPlayer?.release()
     }
 
     private fun startSpottingService() {
@@ -114,7 +203,7 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
                 ContextCompat.getColor(applicationContext, R.color.primaryColor))
         navigationSupportFAB.setImageDrawable(applicationContext.getDrawable(R.drawable.ic_time_to_leave_white_24dp))
         wrappedActivity?.disableKeepScreenOn()
-    }*/
+    }
 
     private fun updateCameraLocation(
             location: LatLng,
@@ -272,10 +361,12 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
 
     @OPERATION
     fun emitAlarm(obstacleType: ObstacleType) {
-        if (obstacleType == ObstacleType.POTHOLE) {
-            holeMediaPlayer?.start()
-        } else if (obstacleType == ObstacleType.SPEED_BUMP) {
-            speedBumpMediaPlayer?.start()
+        if(isAudioOn) {
+            if (obstacleType == ObstacleType.POTHOLE) {
+                holeMediaPlayer?.start()
+            } else if (obstacleType == ObstacleType.SPEED_BUMP) {
+                speedBumpMediaPlayer?.start()
+            }
         }
     }
 
@@ -299,17 +390,6 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
                         LatLng(actualPosition.latitude, actualPosition.longitude)) > actualRadius / 2) {
             signal("fetch")
         }
-
-    }
-
-    private fun initMediaPlayers() {
-        holeMediaPlayer = MediaPlayer.create(applicationContext, R.raw.it_pothole_female)
-        speedBumpMediaPlayer = MediaPlayer.create(applicationContext, R.raw.it_speedbump_female)
-    }
-
-    private fun releaseMediaPlayers() {
-        holeMediaPlayer?.release()
-        speedBumpMediaPlayer?.release()
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
