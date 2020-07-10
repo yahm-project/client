@@ -1,6 +1,5 @@
 package it.unibo.yahm.client.activities
 
-import android.content.res.ColorStateList
 import android.graphics.Point
 import android.media.MediaPlayer
 import android.os.Handler
@@ -8,7 +7,6 @@ import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 import android.view.animation.LinearInterpolator
-import android.widget.Toast
 import androidx.core.content.ContextCompat
 import cartago.INTERNAL_OPERATION
 import cartago.OPERATION
@@ -27,12 +25,11 @@ import it.unibo.yahm.client.sensors.GpsLocation
 import it.unibo.yahm.client.utils.CustomTileProvider
 import it.unibo.yahm.client.utils.DrawableUtils
 import it.unibo.yahm.client.utils.MapUtils
-import it.unibo.yahm.client.utils.ScreenUtils
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
 
 
-class NavigatorActivity : ActivityArtifact(), OnMapReadyCallback {
+class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private var holeMediaPlayer: MediaPlayer? = null
     private var speedBumpMediaPlayer: MediaPlayer? = null
@@ -46,27 +43,26 @@ class NavigatorActivity : ActivityArtifact(), OnMapReadyCallback {
     private val alreadySignaled = mutableListOf<Obstacle>()
     private lateinit var navigationSupportFAB: FloatingActionButton
     private var isSupportEnable = false
-    private var wrappedActivity: NavigatorMain? = null
+    private var wrappedActivity: NavigatorActivity? = null
 
-    class NavigatorMain : JaCaBaseActivity() {
+    class NavigatorActivity : JaCaBaseActivity() {
         fun loadMap(callback: OnMapReadyCallback) {
             (supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).getMapAsync(
                     callback
             )
         }
-
-        fun keepScreenOn() {
+        /*fun keepScreenOn() {
             ScreenUtils.setAlwaysOn(this, true)
         }
 
         fun disableKeepScreenOn() {
             ScreenUtils.setAlwaysOn(this, false)
-        }
+        }*/
     }
 
     fun init() {
         super.init(
-                NavigatorMain::class.java,
+                NavigatorActivity::class.java,
                 R.layout.activity_maps,
                 R.menu.maps_menu,
                 true
@@ -81,13 +77,13 @@ class NavigatorActivity : ActivityArtifact(), OnMapReadyCallback {
 
     private fun initUI() {
         execute {
-            wrappedActivity = getActivity("NavigatorGUI") as NavigatorMain
+            wrappedActivity = getActivity("NavigatorGUI") as NavigatorActivity
             wrappedActivity?.loadMap(this)
         }
-        initFAB()
+      //  initFAB()
     }
 
-    private fun initFAB() {
+  /*  private fun initFAB() {
         execute {
             navigationSupportFAB = findUIElement(R.id.fab_spot) as FloatingActionButton
             navigationSupportFAB.setOnClickListener {
@@ -118,7 +114,7 @@ class NavigatorActivity : ActivityArtifact(), OnMapReadyCallback {
                 ContextCompat.getColor(applicationContext, R.color.primaryColor))
         navigationSupportFAB.setImageDrawable(applicationContext.getDrawable(R.drawable.ic_time_to_leave_white_24dp))
         wrappedActivity?.disableKeepScreenOn()
-    }
+    }*/
 
     private fun updateCameraLocation(
             location: LatLng,
@@ -258,7 +254,7 @@ class NavigatorActivity : ActivityArtifact(), OnMapReadyCallback {
             updateCameraLocation(latLng, 0f)
             execute {
                 beginExternalSession()
-                updateObsProperty("actualRadius", MapUtils.getVisibleRadius(mMap.projection.visibleRegion))
+                updateObsProperty("radius", MapUtils.getVisibleRadius(mMap.projection.visibleRegion))
                 endExternalSession(true)
             }
         }
@@ -297,6 +293,15 @@ class NavigatorActivity : ActivityArtifact(), OnMapReadyCallback {
         }
     }
 
+    @OPERATION
+    fun isNewDataNeeded(lastFetchedPosition: GpsLocation, actualPosition: GpsLocation, actualRadius: Double) {
+        if (MapUtils.distBetween(LatLng(lastFetchedPosition.latitude, lastFetchedPosition.longitude),
+                        LatLng(actualPosition.latitude, actualPosition.longitude)) > actualRadius / 2) {
+            signal("fetch")
+        }
+
+    }
+
     private fun initMediaPlayers() {
         holeMediaPlayer = MediaPlayer.create(applicationContext, R.raw.it_pothole_female)
         speedBumpMediaPlayer = MediaPlayer.create(applicationContext, R.raw.it_speedbump_female)
@@ -314,7 +319,7 @@ class NavigatorActivity : ActivityArtifact(), OnMapReadyCallback {
                 TileOverlayOptions().tileProvider(CustomTileProvider()).zIndex(-1f).fadeIn(true)
         )
         mapReady = true
-        defineObsProperty("actualRadius", MapUtils.getVisibleRadius(mMap.projection.visibleRegion))
+        defineObsProperty("radius", MapUtils.getVisibleRadius(mMap.projection.visibleRegion))
     }
 
     companion object {

@@ -1,7 +1,7 @@
 !start.
 
 +!start
-	<-  makeArtifact("NavigatorGUI", "it.unibo.yahm.client.activities.NavigatorActivity",[],NavigatorActivity);
+	<-  makeArtifact("NavigatorGUI", "it.unibo.yahm.client.activities.NavigatorGUIArtifact",[],NavigatorActivity);
     	focus(NavigatorActivity).
 
 +!observeGPS
@@ -19,31 +19,25 @@
 
 +gpsInfo(Info) : not(lastPositionFetched(LastInfo))
     <- updatePosition(Info);
-       -+pos(Info);
        !fetchNewData.
 
 +gpsInfo(Info) : lastPositionFetched(LastInfo) & radius(Radius)
     <- updatePosition(Info);
-       -+pos(Info);
        !checkIfNewDataIsNeeded;
        !checkForAlarm.
-
-+actualRadius(Radius)
-    <- -+radius(Radius).
 
 +fetch
     <- !fetchNewData.
 
-+!checkIfNewDataIsNeeded : lastPositionFetched(LastInfo) & radius(Radius) & pos(Info) & isSupportEnable(true)
++!checkIfNewDataIsNeeded : lastPositionFetched(LastInfo) & radius(Radius) & gpsInfo(Info)
     <- isNewDataNeeded(LastInfo, Info, Radius).
 
-+!fetchNewData : pos(Info) & radius(Radius) & isSupportEnable(true)
++!fetchNewData : gpsInfo(Info) & radius(Radius)
     <- -+lastPositionFetched(Info);
        updateConditions(Info,Radius).
 
-+!checkForAlarm : pos(Info) & myobstacles(Obstacles) & isSupportEnable(true)
-    <- println(Obstacles)
-       checkAlarm(Obstacles, Info).
++!checkForAlarm : gpsInfo(Info) & obstacles(Obstacles)
+    <- checkAlarm(Obstacles, Info).
 
 +alarmNeeded(ObstacleType)
     <- emitAlarm(ObstacleType).
@@ -52,8 +46,4 @@
     <- updateQualities(Qualities).
 
 +obstacles(Obstacles)
-    <- -+myobstacles(Obstacles);
-        updateObstacles(Obstacles).
-
-+isSupportEnable(IsEnabled)
-    <- -+isSupportEnable(IsEnabled).
+    <- updateObstacles(Obstacles).

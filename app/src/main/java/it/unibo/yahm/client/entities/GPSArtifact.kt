@@ -84,12 +84,4 @@ class GPSArtifact : ServiceArtifact() {
         }
     }
 
-    @OPERATION
-    fun isNewDataNeeded(lastFetchedPosition: GpsLocation, actualPosition: GpsLocation, actualRadius: Double) {
-        if (MapUtils.distBetween(LatLng(lastFetchedPosition.latitude, lastFetchedPosition.longitude),
-                        LatLng(actualPosition.latitude, actualPosition.longitude)) > actualRadius / 2) {
-            signal("fetch")
-        }
-
-    }
 }
