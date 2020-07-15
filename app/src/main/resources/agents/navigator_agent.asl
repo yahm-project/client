@@ -1,20 +1,17 @@
-!start.
+!assist_user.
 
-+!start
++!assist_user
 	<-  makeArtifact("NavigatorGUI", "it.unibo.yahm.client.artifacts.NavigatorGUIArtifact",[],NavigatorActivity);
-    	focus(NavigatorActivity).
+    	focus(NavigatorActivity);
+    	makeArtifact("RoadInfoArtifact", "it.unibo.yahm.client.artifacts.RoadInfoArtifact",[],RoadInfoArtifact);
+        focus(RoadInfoArtifact).
 
 +!observeGPS
     <-  makeArtifact("GPSArtifact", "it.unibo.yahm.client.artifacts.GPSArtifact",[],GPSArtifact);
         focus(GPSArtifact).
 
-+!observeRoadInfo
-    <-  makeArtifact("RoadInfoArtifact", "it.unibo.yahm.client.artifacts.RoadInfoArtifact",[],RoadInfoArtifact);
-        focus(RoadInfoArtifact).
-
 +ui_ready [artifact_name(Id,NavigatorActivity)]
     <-  println("MainUI ready.");
-        !observeRoadInfo;
         !observeGPS.
 
 +gpsInfo(Info) : not(lastPositionFetched(LastInfo))

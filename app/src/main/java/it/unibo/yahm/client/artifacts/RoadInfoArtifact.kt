@@ -1,10 +1,12 @@
-package it.unibo.yahm.client.entities
+package it.unibo.yahm.client.artifacts
 
 import androidx.collection.LruCache
 import cartago.OPERATION
 import com.google.android.gms.maps.model.LatLng
 import it.unibo.pslab.jaca_android.core.ServiceArtifact
 import it.unibo.yahm.client.SpotholeService
+import it.unibo.yahm.client.entities.Leg
+import it.unibo.yahm.client.entities.Obstacle
 import it.unibo.yahm.client.sensors.GpsLocation
 import it.unibo.yahm.client.services.RetrofitService
 
@@ -17,8 +19,6 @@ class RoadInfoArtifact : ServiceArtifact() {
 
     fun init() {
         backendService = RetrofitService(applicationContext).spotholeService
-        defineObsProperty("obstacles", obstacles)
-        defineObsProperty("qualities", legs)
     }
 
     private fun fetchNewData(location: LatLng, radius: Double) {
@@ -46,8 +46,13 @@ class RoadInfoArtifact : ServiceArtifact() {
     @OPERATION
     fun updateConditions(location: GpsLocation, radius: Double) {
         fetchNewData(LatLng(location.latitude, location.longitude), (2 * radius).coerceAtMost(MAX_RADIUS_METERS))
-        updateObsProperty("obstacles", obstacles)
-        updateObsProperty("qualities", legs)
+        if (getObsProperty("obstacles") != null && getObsProperty("qualities") != null) {
+            updateObsProperty("obstacles", obstacles)
+            updateObsProperty("qualities", legs)
+        } else {
+            defineObsProperty("obstacles", obstacles)
+            defineObsProperty("qualities", legs)
+        }
 
     }
 

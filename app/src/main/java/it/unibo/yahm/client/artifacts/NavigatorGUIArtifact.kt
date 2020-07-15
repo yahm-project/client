@@ -1,7 +1,4 @@
-package it.unibo.yahm.client.activities
-
-import android.widget.Toast
-import it.unibo.yahm.client.utils.ScreenUtils
+package it.unibo.yahm.client.artifacts
 
 import android.content.Context
 import android.content.res.ColorStateList
@@ -14,6 +11,7 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.animation.LinearInterpolator
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import cartago.INTERNAL_OPERATION
 import cartago.OPERATION
@@ -21,9 +19,9 @@ import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.maps.android.SphericalUtil
-import it.unibo.yahm.R
 import it.unibo.pslab.jaca_android.core.ActivityArtifact
 import it.unibo.pslab.jaca_android.core.JaCaBaseActivity
+import it.unibo.yahm.R
 import it.unibo.yahm.client.entities.Leg
 import it.unibo.yahm.client.entities.Obstacle
 import it.unibo.yahm.client.entities.ObstacleType
@@ -32,6 +30,9 @@ import it.unibo.yahm.client.sensors.GpsLocation
 import it.unibo.yahm.client.utils.CustomTileProvider
 import it.unibo.yahm.client.utils.DrawableUtils
 import it.unibo.yahm.client.utils.MapUtils
+import it.unibo.yahm.client.utils.ScreenUtils
+import java.util.concurrent.Callable
+import java.util.concurrent.FutureTask
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
 
@@ -45,7 +46,7 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
     private var updateRotationWithSensors = false
     private var stopPreviousInterpolation = AtomicBoolean(false)
     private var currentCameraBearing = 0f
-    private val screenSize = Point()
+    private val screenSize: Point = Point()
     private val alreadySignaled = mutableListOf<Obstacle>()
     private lateinit var navigationSupportFAB: FloatingActionButton
     private var isSupportEnable = false
@@ -55,7 +56,7 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
     class NavigatorActivity : JaCaBaseActivity() {
         fun loadMap(callback: OnMapReadyCallback) {
             (supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).getMapAsync(
-                    callback
+                callback
             )
         }
 
@@ -66,14 +67,18 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
         fun disableKeepScreenOn() {
             ScreenUtils.setAlwaysOn(this, false)
         }
+
+        fun getScreenSize(screenSize: Point) {
+            windowManager.defaultDisplay.getSize(screenSize)
+        }
     }
 
     fun init() {
         super.init(
-                NavigatorActivity::class.java,
-                R.layout.activity_navigator,
-                R.menu.maps_menu,
-                true
+            NavigatorActivity::class.java,
+            R.layout.activity_navigator,
+            R.menu.maps_menu,
+            true
         )
     }
 
@@ -105,10 +110,17 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
     }
 
     @INTERNAL_OPERATION
+    fun resumeOperation() {
+        Log.d("Operation", "onResume")
+        initMediaPlayers()
+    }
+
+    @INTERNAL_OPERATION
     override fun setup() {
         bindOnPauseEventToOp("pauseOperation")
         bindOnCreateOptionsMenu("onCreateOptionsMenu")
         bindOnOptionsItemSelectedToOp("onOptionsItemSelected")
+        bindOnResumeEventToOp("resumeOperation")
         initUI()
     }
 
@@ -117,9 +129,9 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
             wrappedActivity = getActivity("NavigatorGUI") as NavigatorActivity
             wrappedActivity?.loadMap(this)
             wrappedActivity?.setActionBar(findUIElement(R.id.my_toolbar) as android.widget.Toolbar)
+            wrappedActivity?.getScreenSize(screenSize)
         }
         restorePreferences(wrappedActivity)
-        initMediaPlayers()
         initFAB()
     }
 
@@ -200,24 +212,24 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
     private fun stopSpottingService() {
         Toast.makeText(applicationContext, applicationContext.getString(R.string.road_scan_stopped), Toast.LENGTH_SHORT).show()
         navigationSupportFAB.backgroundTintList = ColorStateList.valueOf(
-                ContextCompat.getColor(applicationContext, R.color.primaryColor))
+            ContextCompat.getColor(applicationContext, R.color.primaryColor))
         navigationSupportFAB.setImageDrawable(applicationContext.getDrawable(R.drawable.ic_time_to_leave_white_24dp))
         wrappedActivity?.disableKeepScreenOn()
     }
 
     private fun updateCameraLocation(
-            location: LatLng,
-            bearing: Float,
-            zoom: Float = ZOOM,
-            tilt: Float = TILT
+        location: LatLng,
+        bearing: Float,
+        zoom: Float = ZOOM,
+        tilt: Float = TILT
     ) {
         if (!mapReady) return
         val cameraUpdate = CameraPosition.Builder()
-                .target(location)
-                .zoom(zoom)
-                .tilt(tilt)
-                .bearing(bearing)
-                .build()
+            .target(location)
+            .zoom(zoom)
+            .tilt(tilt)
+            .bearing(bearing)
+            .build()
         Log.d(javaClass.name, "Update camera location: $location, bearing: $bearing")
         execute { mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraUpdate)) }
     }
@@ -225,13 +237,13 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
     private fun updateRotation(newTargetRotation: Float) {
         if (!mapReady) return
         if (MapUtils.rotationGap(
-                        currentCarTargetRotation,
-                        newTargetRotation
-                ) > DELTA_TRIGGER_ROTATION
+                currentCarTargetRotation,
+                newTargetRotation
+            ) > DELTA_TRIGGER_ROTATION
         ) {
             Log.d(
-                    javaClass.name,
-                    "Rotating car marker from $currentCarTargetRotation to $newTargetRotation"
+                javaClass.name,
+                "Rotating car marker from $currentCarTargetRotation to $newTargetRotation"
             )
             currentCarTargetRotation = newTargetRotation
             execute { carMarker!!.rotation = newTargetRotation }
@@ -241,10 +253,10 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
     private fun drawLeg(legs: List<Leg>) {
         legs.forEach { leg ->
             val polyline = PolylineOptions()
-                    .addAll(listOf(leg.from.coordinates.toLatLng(), leg.to.coordinates.toLatLng()))
-                    .color(Quality.fromValue(leg.quality)!!.color)
-                    .startCap(RoundCap())
-                    .endCap(RoundCap())
+                .addAll(listOf(leg.from.coordinates.toLatLng(), leg.to.coordinates.toLatLng()))
+                .color(Quality.fromValue(leg.quality)!!.color)
+                .startCap(RoundCap())
+                .endCap(RoundCap())
             execute {
                 mMap.addPolyline(polyline)
             }
@@ -262,7 +274,7 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
                 val circleDrawable = ContextCompat.getDrawable(applicationContext, drawable)
                 val markerIcon = DrawableUtils.getMarkerIconFromDrawable(circleDrawable!!)
                 val marker = MarkerOptions().position(it.coordinates.toLatLng())
-                        .anchor(0.5f, 1f).icon(markerIcon)
+                    .anchor(0.5f, 1f).icon(markerIcon)
                 execute {
                     mMap.addMarker(marker)
                 }
@@ -274,18 +286,24 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
         if (!mapReady) return
         val handler = Handler(Looper.getMainLooper())
         val start = SystemClock.uptimeMillis()
-        val projection: Projection = mMap.projection
-        val startPoint: Point = projection.toScreenLocation(carMarker!!.position)
-        val startLatLng = projection.fromScreenLocation(startPoint)
         val interpolator = LinearInterpolator()
+        val futureProjection =
+            FutureTask(Callable<Projection?> { mMap.projection })
+        execute { futureProjection.run() }
+        val projection: Projection = futureProjection.get()!!
+        val futureStartPoint =
+            FutureTask(Callable<Point?> { projection.toScreenLocation(carMarker!!.position) })
+        execute { futureStartPoint.run() }
+        val startPoint: Point = futureStartPoint.get()!!
+        val startLatLng = projection.fromScreenLocation(startPoint)
 
         if (!updateRotationWithSensors) {
             val finalScreenPosition = projection.toScreenLocation(position)
             val newBearing = SphericalUtil.computeHeading(startLatLng, position).toFloat()
             updateRotation(newBearing)
             if (abs(newBearing - currentCameraBearing) > CAMERA_BEARING_THRESHOLD ||
-                    finalScreenPosition.x < SCREEN_PADDING || finalScreenPosition.x > screenSize.x - SCREEN_PADDING ||
-                    finalScreenPosition.y < SCREEN_PADDING || finalScreenPosition.y > screenSize.y - SCREEN_PADDING
+                finalScreenPosition.x < SCREEN_PADDING || finalScreenPosition.x > screenSize.x - SCREEN_PADDING ||
+                finalScreenPosition.y < SCREEN_PADDING || finalScreenPosition.y > screenSize.y - SCREEN_PADDING
             ) {
                 updateCameraLocation(position, newBearing)
             }
@@ -299,7 +317,7 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
                 override fun run() {
                     val elapsed = SystemClock.uptimeMillis() - start
                     val t: Float =
-                            interpolator.getInterpolation(elapsed.toFloat() / INTERPOLATE_DURATION)
+                        interpolator.getInterpolation(elapsed.toFloat() / INTERPOLATE_DURATION)
 
                     val lng: Double = t * position.longitude + (1 - t) * startLatLng.longitude
                     val lat: Double = t * position.latitude + (1 - t) * startLatLng.latitude
@@ -325,22 +343,22 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
             val latLng = LatLng(gpsInformation.latitude, gpsInformation.longitude)
             if (carMarker == null) {
                 val circle =
-                        ContextCompat.getDrawable(applicationContext, R.drawable.ic_up_arrow_circle)
+                    ContextCompat.getDrawable(applicationContext, R.drawable.ic_up_arrow_circle)
                 val markerIcon = DrawableUtils.getMarkerIconFromDrawable(circle!!)
                 execute {
                     carMarker = mMap.addMarker(
-                            MarkerOptions()
-                                    .position(latLng)
-                                    .anchor(0.5f, 0.5f)
-                                    .rotation(0f)
-                                    .flat(true)
-                                    .icon(markerIcon)
+                        MarkerOptions()
+                            .position(latLng)
+                            .anchor(0.5f, 0.5f)
+                            .rotation(0f)
+                            .flat(true)
+                            .icon(markerIcon)
                     )
                 }
             } else {
-                execute { updateCarLocation(latLng) }
+                updateCarLocation(latLng)
             }
-            updateCameraLocation(latLng, 0f)
+            //updateCameraLocation(latLng, 0f)
             execute {
                 beginExternalSession()
                 updateObsProperty("radius", MapUtils.getVisibleRadius(mMap.projection.visibleRegion))
@@ -377,7 +395,7 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
             val speed = gpsInfo.speed
             val distanceBetweenCarAndObstacle = MapUtils.distBetween(latLng, it.coordinates.toLatLng())
             if ((speed!! > 0.0f && distanceBetweenCarAndObstacle / speed < OBSTACLE_ALARM_THRESHOLD_IN_SECONDS
-                            || distanceBetweenCarAndObstacle < OBSTACLE_ALARM_THRESHOLD_IN_METERS) && !alreadySignaled.contains(it)) {
+                        || distanceBetweenCarAndObstacle < OBSTACLE_ALARM_THRESHOLD_IN_METERS) && !alreadySignaled.contains(it)) {
                 alreadySignaled.add(it)
                 signal("alarmNeeded", it.obstacleType)
             }
@@ -387,7 +405,7 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
     @OPERATION
     fun isNewDataNeeded(lastFetchedPosition: GpsLocation, actualPosition: GpsLocation, actualRadius: Double) {
         if (MapUtils.distBetween(LatLng(lastFetchedPosition.latitude, lastFetchedPosition.longitude),
-                        LatLng(actualPosition.latitude, actualPosition.longitude)) > actualRadius / 2) {
+                LatLng(actualPosition.latitude, actualPosition.longitude)) > actualRadius / 2) {
             signal("fetch")
         }
     }
@@ -396,7 +414,7 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
         mMap = googleMap
         mMap.mapType = GoogleMap.MAP_TYPE_NONE
         mMap.addTileOverlay(
-                TileOverlayOptions().tileProvider(CustomTileProvider()).zIndex(-1f).fadeIn(true)
+            TileOverlayOptions().tileProvider(CustomTileProvider()).zIndex(-1f).fadeIn(true)
         )
         mapReady = true
         defineObsProperty("radius", MapUtils.getVisibleRadius(mMap.projection.visibleRegion))
