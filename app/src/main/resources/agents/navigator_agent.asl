@@ -26,14 +26,14 @@
 +fetch
     <- !fetchNewData.
 
-+!checkIfNewDataIsNeeded : lastPositionFetched(LastInfo) & radius(Radius) & gpsInfo(Info)
++!checkIfNewDataIsNeeded : lastPositionFetched(LastInfo) & radius(Radius) & gpsInfo(Info) & isSupportEnable(true)
     <- isNewDataNeeded(LastInfo, Info, Radius).
 
-+!fetchNewData : gpsInfo(Info) & radius(Radius)
++!fetchNewData : gpsInfo(Info) & radius(Radius) & isSupportEnable(true)
     <- -+lastPositionFetched(Info);
        updateConditions(Info,Radius).
 
-+!checkForAlarm : gpsInfo(Info) & obstacles(Obstacles)
++!checkForAlarm : gpsInfo(Info) & obstacles(Obstacles) & isSupportEnable(true)
     <- checkAlarm(Obstacles, Info).
 
 +alarmNeeded(ObstacleType)

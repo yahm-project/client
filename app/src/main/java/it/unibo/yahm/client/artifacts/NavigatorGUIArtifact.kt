@@ -145,12 +145,12 @@ class NavigatorGUIArtifact : ActivityArtifact(), OnMapReadyCallback {
                     startSpottingService()
                 }
                 isSupportEnable = !isSupportEnable
-                /*beginExternalSession()
-                signal("isSupportEnable", isSupportEnable)
-                endExternalSession(true)*/
+                beginExternalSession()
+                updateObsProperty("isSupportEnable", isSupportEnable)
+                endExternalSession(true)
             }
         }
-        //signal("isSupportEnable", isSupportEnable)
+        defineObsProperty("isSupportEnable", isSupportEnable)
     }
 
 

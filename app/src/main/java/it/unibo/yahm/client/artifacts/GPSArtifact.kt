@@ -1,4 +1,4 @@
-package it.unibo.yahm.client.entities
+package it.unibo.yahm.client.artifacts
 
 import android.Manifest
 import android.content.Context
